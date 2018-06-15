@@ -11,8 +11,7 @@ import (
 func main() {
 	pbxproj := xcodeproj.New("pbxproj")
 
-	// logPretty(pbxproj.Raw())
-	logPretty(pbxproj.Json())
+	logPretty(pbxproj.Objects)
 }
 
 func logPretty(v interface{}) {
