@@ -1,0 +1,11 @@
+[[constraint]]
+  name = "github.com/bitrise-io/go-utils"
+  branch = "master"
+
+[[constraint]]
+  name = "howett.net/plist"
+  branch = "master"
+
+[prune]
+  go-tests = true
+  unused-packages = true
