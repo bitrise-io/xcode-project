@@ -13,13 +13,6 @@ import (
 
 // XcodeProj ...
 type XcodeProj struct {
-	raw serialized.Object
-
-	nativeTargetByID       map[string]NativeTarget
-	targetDependencyByID   map[string]TargetDependency
-	configurationListByID  map[string]ConfigurationList
-	buildConfigurationByID map[string]BuildConfiguration
-
 	Name string
 	Path string
 
@@ -29,12 +22,13 @@ type XcodeProj struct {
 }
 
 // NativeTarget ...
-func (p XcodeProj) NativeTarget(id string) (NativeTarget, error) {
-	target, ok := p.nativeTargetByID[id]
-	if !ok {
-		return NativeTarget{}, fmt.Errorf("native target not found with id: %s", id)
+func (p XcodeProj) NativeTarget(id string) (NativeTarget, bool) {
+	for _, target := range p.Targets {
+		if target.ID == id {
+			return target, true
+		}
 	}
-	return target, nil
+	return NativeTarget{}, false
 }
 
 // SharedSchemes ...
@@ -76,7 +70,25 @@ func Open(pth string) (XcodeProj, error) {
 		return XcodeProj{}, err
 	}
 
-	proj, err := ParsePBXProj(objects)
+	projectID := ""
+	for id := range objects {
+		object, err := objects.Object(id)
+		if err != nil {
+			return XcodeProj{}, err
+		}
+
+		objectISA, err := object.String("isa")
+		if err != nil {
+			return XcodeProj{}, err
+		}
+
+		if objectISA == "PBXProject" {
+			projectID = id
+			break
+		}
+	}
+
+	proj, err := parseProj(projectID, objects)
 	if err != nil {
 		return XcodeProj{}, nil
 	}

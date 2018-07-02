@@ -1,5 +1,7 @@
 package xcodeproj
 
+import "github.com/bitrise-tools/xcode-project/serialized"
+
 // ConfigurationList ...
 type ConfigurationList struct {
 	ISA                      string
@@ -8,12 +10,8 @@ type ConfigurationList struct {
 	BuildConfigurations      []BuildConfiguration
 }
 
-func (p XcodeProj) configurationList(id string) (ConfigurationList, error) {
-	if configurationList, ok := p.configurationListByID[id]; ok {
-		return configurationList, nil
-	}
-
-	raw, err := p.raw.Object(id)
+func parseConfigurationList(id string, objects serialized.Object) (ConfigurationList, error) {
+	raw, err := objects.Object(id)
 	if err != nil {
 		return ConfigurationList{}, err
 	}
@@ -25,7 +23,7 @@ func (p XcodeProj) configurationList(id string) (ConfigurationList, error) {
 
 	buildConfigurations := []BuildConfiguration{}
 	for _, rawID := range rawBuildConfigurations {
-		buildConfiguration, err := p.buildConfiguration(rawID)
+		buildConfiguration, err := parseBuildConfiguration(rawID, objects)
 		if err != nil {
 			return ConfigurationList{}, err
 		}
@@ -38,14 +36,10 @@ func (p XcodeProj) configurationList(id string) (ConfigurationList, error) {
 		defaultConfigurationName = aDefaultConfigurationName
 	}
 
-	configurationList := ConfigurationList{
+	return ConfigurationList{
 		ISA: "XCConfigurationList",
 		ID:  id,
 		DefaultConfigurationName: defaultConfigurationName,
 		BuildConfigurations:      buildConfigurations,
-	}
-
-	p.configurationListByID[id] = configurationList
-
-	return configurationList, nil
+	}, nil
 }

@@ -4,18 +4,13 @@ import "github.com/bitrise-tools/xcode-project/serialized"
 
 // BuildConfiguration ..
 type BuildConfiguration struct {
-	ISA           string
 	ID            string
 	Name          string
 	BuildSettings serialized.Object
 }
 
-func (p XcodeProj) buildConfiguration(id string) (BuildConfiguration, error) {
-	if buildConfiguration, ok := p.buildConfigurationByID[id]; ok {
-		return buildConfiguration, nil
-	}
-
-	raw, err := p.raw.Object(id)
+func parseBuildConfiguration(id string, objects serialized.Object) (BuildConfiguration, error) {
+	raw, err := objects.Object(id)
 	if err != nil {
 		return BuildConfiguration{}, err
 	}
@@ -30,14 +25,9 @@ func (p XcodeProj) buildConfiguration(id string) (BuildConfiguration, error) {
 		return BuildConfiguration{}, err
 	}
 
-	buildConfiguration := BuildConfiguration{
-		ISA:           "XCBuildConfiguration",
+	return BuildConfiguration{
 		ID:            id,
 		Name:          name,
 		BuildSettings: buildSettings,
-	}
-
-	p.buildConfigurationByID[id] = buildConfiguration
-
-	return buildConfiguration, nil
+	}, nil
 }

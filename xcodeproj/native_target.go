@@ -1,5 +1,7 @@
 package xcodeproj
 
+import "github.com/bitrise-tools/xcode-project/serialized"
+
 // NativeTarget ...
 type NativeTarget struct {
 	ISA string
@@ -10,12 +12,8 @@ type NativeTarget struct {
 	Dependencies           []TargetDependency
 }
 
-func (p XcodeProj) nativeTarget(id string) (NativeTarget, error) {
-	if nativeTarget, ok := p.nativeTargetByID[id]; ok {
-		return nativeTarget, nil
-	}
-
-	rawTarget, err := p.raw.Object(id)
+func parseNativeTarget(id string, objects serialized.Object) (NativeTarget, error) {
+	rawTarget, err := objects.Object(id)
 	if err != nil {
 		return NativeTarget{}, err
 	}
@@ -30,19 +28,31 @@ func (p XcodeProj) nativeTarget(id string) (NativeTarget, error) {
 		return NativeTarget{}, err
 	}
 
-	buildConfigurationList, err := p.configurationList(buildConfigurationListID)
+	buildConfigurationList, err := parseConfigurationList(buildConfigurationListID, objects)
 	if err != nil {
 		return NativeTarget{}, err
 	}
 
-	target := NativeTarget{
+	dependencyIDs, err := rawTarget.StringSlice("dependencies")
+	if err != nil {
+		return NativeTarget{}, err
+	}
+
+	var dependencies []TargetDependency
+	for _, dependencyID := range dependencyIDs {
+		dependency, err := parseTargetDependency(dependencyID, objects)
+		if err != nil {
+			return NativeTarget{}, err
+		}
+
+		dependencies = append(dependencies, dependency)
+	}
+
+	return NativeTarget{
 		ISA:  "PBXNativeTarget",
 		ID:   id,
 		Name: name,
 		BuildConfigurationList: buildConfigurationList,
-	}
-
-	p.nativeTargetByID[id] = target
-
-	return target, nil
+		Dependencies:           dependencies,
+	}, nil
 }
