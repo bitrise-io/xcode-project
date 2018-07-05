@@ -103,11 +103,9 @@ const rawNativeTarget = `{
 }`
 
 const expectedNativeTarget = `{
-	"ISA": "PBXNativeTarget",
 	"ID": "13E76E0D1F4AC90A0028096E",
 	"Name": "code-sign-test",
 	"BuildConfigurationList": {
-		"ISA": "XCConfigurationList",
 		"ID": "13E76E3A1F4AC90A0028096E",
 		"DefaultConfigurationName": "Release",
 		"BuildConfigurations": [
@@ -149,14 +147,11 @@ const expectedNativeTarget = `{
 	},
 	"Dependencies": [
 		{
-			"ISA": "PBXTargetDependency",
 			"ID": "13E76E511F4AC94F0028096E",
 			"Target": {
-				"ISA": "PBXNativeTarget",
 				"ID": "13E76E461F4AC94F0028096E",
 				"Name": "share-extension",
 				"BuildConfigurationList": {
-					"ISA": "XCConfigurationList",
 					"ID": "13E76E3A1F4AC90A0028096E",
 					"DefaultConfigurationName": "Release",
 					"BuildConfigurations": [

@@ -4,9 +4,7 @@ import "github.com/bitrise-tools/xcode-project/serialized"
 
 // NativeTarget ...
 type NativeTarget struct {
-	ISA string
-	ID  string
-
+	ID                     string
 	Name                   string
 	BuildConfigurationList ConfigurationList
 	Dependencies           []TargetDependency
@@ -49,7 +47,6 @@ func parseNativeTarget(id string, objects serialized.Object) (NativeTarget, erro
 	}
 
 	return NativeTarget{
-		ISA:  "PBXNativeTarget",
 		ID:   id,
 		Name: name,
 		BuildConfigurationList: buildConfigurationList,

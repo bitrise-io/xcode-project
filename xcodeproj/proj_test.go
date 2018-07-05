@@ -108,17 +108,12 @@ const rawProj = `
 }`
 
 const expectedProj = `{
-	"Name": "",
-	"Path": "",
-	"ISA": "PBXProject",
 	"ID": "13E76E061F4AC90A0028096E",
-	"Targets": [
+	"NativeTargets": [
 		{
-			"ISA": "PBXNativeTarget",
 			"ID": "13E76E301F4AC90A0028096E",
 			"Name": "code-sign-testUITests",
 			"BuildConfigurationList": {
-				"ISA": "XCConfigurationList",
 				"ID": "13E76E401F4AC90A0028096E",
 				"DefaultConfigurationName": "Release",
 				"BuildConfigurations": [
@@ -153,6 +148,5 @@ func TestParseProj(t *testing.T) {
 
 	proj, err := parseProj("13E76E061F4AC90A0028096E", raw)
 	require.NoError(t, err)
-	// fmt.Printf("proj:\n%s\n", pretty.Object(proj))
 	require.Equal(t, expectedProj, pretty.Object(proj))
 }

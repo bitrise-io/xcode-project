@@ -87,7 +87,7 @@ func (o Object) ObjectSlice(key string) ([]Object, error) {
 	for _, v := range casted {
 		item, ok := v.(Object)
 		if !ok {
-			return nil, fmt.Errorf("value (%v) for key (%s) is not a string array", casted, key)
+			return nil, fmt.Errorf("value (%v) for key (%s) is not a map string interface array", casted, key)
 		}
 
 		slice = append(slice, item)

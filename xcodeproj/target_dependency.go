@@ -4,7 +4,6 @@ import "github.com/bitrise-tools/xcode-project/serialized"
 
 // TargetDependency ...
 type TargetDependency struct {
-	ISA    string
 	ID     string
 	Target NativeTarget
 }
@@ -26,7 +25,6 @@ func parseTargetDependency(id string, objects serialized.Object) (TargetDependen
 	}
 
 	return TargetDependency{
-		ISA:    "PBXTargetDependency",
 		ID:     id,
 		Target: target,
 	}, nil

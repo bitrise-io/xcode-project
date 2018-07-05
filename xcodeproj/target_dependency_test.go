@@ -45,14 +45,11 @@ const rawTargetDependency = `
 }`
 
 const expectedTargetDependency = `{
-	"ISA": "PBXTargetDependency",
 	"ID": "13E76E511F4AC94F0028096E",
 	"Target": {
-		"ISA": "PBXNativeTarget",
 		"ID": "13E76E461F4AC94F0028096E",
 		"Name": "share-extension",
 		"BuildConfigurationList": {
-			"ISA": "XCConfigurationList",
 			"ID": "13E76E3A1F4AC90A0028096E",
 			"DefaultConfigurationName": "Release",
 			"BuildConfigurations": []

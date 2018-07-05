@@ -4,7 +4,6 @@ import "github.com/bitrise-tools/xcode-project/serialized"
 
 // ConfigurationList ...
 type ConfigurationList struct {
-	ISA                      string
 	ID                       string
 	DefaultConfigurationName string
 	BuildConfigurations      []BuildConfiguration
@@ -37,8 +36,7 @@ func parseConfigurationList(id string, objects serialized.Object) (Configuration
 	}
 
 	return ConfigurationList{
-		ISA: "XCConfigurationList",
-		ID:  id,
+		ID: id,
 		DefaultConfigurationName: defaultConfigurationName,
 		BuildConfigurations:      buildConfigurations,
 	}, nil

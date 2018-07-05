@@ -13,22 +13,10 @@ import (
 
 // XcodeProj ...
 type XcodeProj struct {
+	Proj Proj
+
 	Name string
 	Path string
-
-	ISA     string
-	ID      string
-	Targets []NativeTarget
-}
-
-// NativeTarget ...
-func (p XcodeProj) NativeTarget(id string) (NativeTarget, bool) {
-	for _, target := range p.Targets {
-		if target.ID == id {
-			return target, true
-		}
-	}
-	return NativeTarget{}, false
 }
 
 // SharedSchemes ...
@@ -88,14 +76,16 @@ func Open(pth string) (XcodeProj, error) {
 		}
 	}
 
-	proj, err := parseProj(projectID, objects)
+	p, err := parseProj(projectID, objects)
 	if err != nil {
 		return XcodeProj{}, nil
 	}
-	proj.Path = pth
-	proj.Name = strings.TrimSuffix(filepath.Base(pth), filepath.Ext(pth))
 
-	return proj, nil
+	return XcodeProj{
+		Proj: p,
+		Path: pth,
+		Name: strings.TrimSuffix(filepath.Base(pth), filepath.Ext(pth)),
+	}, nil
 }
 
 // IsXcodeProj ...
