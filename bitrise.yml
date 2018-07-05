@@ -4,9 +4,13 @@ default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 project_type: other
 
 workflows:
-  ci:
+  test:
     steps:
     - go-list:
     - golint:
     - errcheck:
     - go-test:
+    - codecov:
+        inputs:
+        - other_options: -f ${GO_CODE_COVERAGE_REPORT_PATH}
+        - CODECOV_TOKEN: "$CODECOV_UPLOAD_TOKEN"

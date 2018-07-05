@@ -73,6 +73,9 @@ type Group struct {
 type Workspace struct {
 	FileRefs []FileRef `xml:"FileRef"`
 	Groups   []Group   `xml:"Group"`
+
+	Name string
+	Path string
 }
 
 // Open ...
@@ -87,5 +90,9 @@ func Open(pth string) (Workspace, error) {
 	if err := xml.Unmarshal(b, &workspace); err != nil {
 		return Workspace{}, err
 	}
+
+	workspace.Name = strings.TrimSuffix(filepath.Base(pth), filepath.Ext(pth))
+	workspace.Path = pth
+
 	return workspace, nil
 }

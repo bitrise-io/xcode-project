@@ -12,6 +12,9 @@ func TestOpenScheme(t *testing.T) {
 	scheme, err := Open(pth)
 	require.NoError(t, err)
 
+	require.Equal(t, "ios-simple-objc", scheme.Name)
+	require.Equal(t, pth, scheme.Path)
+
 	require.Equal(t, "Release", scheme.ArchiveAction.BuildConfiguration)
 	require.Equal(t, 2, len(scheme.BuildAction.BuildActionEntries))
 
@@ -20,6 +23,10 @@ func TestOpenScheme(t *testing.T) {
 		require.Equal(t, "YES", entry.BuildForArchiving)
 		require.Equal(t, "YES", entry.BuildForTesting)
 		require.Equal(t, "BA3CBE7419F7A93800CED4D5", entry.BuildableReference.BlueprintIdentifier)
+
+		pth, err := entry.BuildableReference.ReferencedContainerAbsPath("/project.xcodeproj")
+		require.NoError(t, err)
+		require.Equal(t, "/project.xcodeproj/ios-simple-objc.xcodeproj", pth)
 	}
 
 	{

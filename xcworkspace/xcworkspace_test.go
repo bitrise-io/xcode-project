@@ -15,6 +15,10 @@ func TestOpen(t *testing.T) {
 
 	workspace, err := Open(dir)
 	require.NoError(t, err)
+
+	require.Equal(t, filepath.Base(filepath.Dir(pth)), workspace.Name)
+	require.Equal(t, filepath.Dir(pth), workspace.Path)
+
 	require.Equal(t, 1, len(workspace.Groups))
 
 	{

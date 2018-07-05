@@ -2,10 +2,12 @@ package xcscheme
 
 import (
 	"encoding/xml"
+	"fmt"
 	"path/filepath"
 	"strings"
 
 	"github.com/bitrise-io/go-utils/fileutil"
+	"github.com/bitrise-io/go-utils/pathutil"
 )
 
 // BuildableReference ...
@@ -14,6 +16,18 @@ type BuildableReference struct {
 	BlueprintName       string `xml:"BlueprintName,attr"`
 	BuildableName       string `xml:"BuildableName,attr"`
 	ReferencedContainer string `xml:"ReferencedContainer,attr"`
+}
+
+// ReferencedContainerAbsPath ...
+func (r BuildableReference) ReferencedContainerAbsPath(schemeContainerDir string) (string, error) {
+	s := strings.Split(r.ReferencedContainer, ":")
+	if len(s) != 2 {
+		return "", fmt.Errorf("unknown referenced container (%s)", r.ReferencedContainer)
+	}
+
+	base := s[1]
+	absPth := filepath.Join(schemeContainerDir, base)
+	return pathutil.AbsPath(absPth)
 }
 
 // BuildActionEntry ...
@@ -35,9 +49,11 @@ type ArchiveAction struct {
 
 // Scheme ...
 type Scheme struct {
-	Name          string
 	BuildAction   BuildAction
 	ArchiveAction ArchiveAction
+
+	Name string
+	Path string
 }
 
 // Open ...
@@ -51,6 +67,9 @@ func Open(pth string) (Scheme, error) {
 	if err := xml.Unmarshal(b, &scheme); err != nil {
 		return Scheme{}, err
 	}
+
 	scheme.Name = strings.TrimSuffix(filepath.Base(pth), filepath.Ext(pth))
+	scheme.Path = pth
+
 	return scheme, nil
 }
