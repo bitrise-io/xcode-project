@@ -108,5 +108,5 @@ func Open(pth string) (Workspace, error) {
 
 // IsWorkspace ...
 func IsWorkspace(pth string) bool {
-	return strings.HasSuffix(pth, ".xcworkspace")
+	return filepath.Ext(pth) == ".xcworkspace"
 }

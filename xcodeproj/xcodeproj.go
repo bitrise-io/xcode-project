@@ -90,5 +90,5 @@ func Open(pth string) (XcodeProj, error) {
 
 // IsXcodeProj ...
 func IsXcodeProj(pth string) bool {
-	return strings.HasSuffix(pth, ".xcodeproj")
+	return filepath.Ext(pth) == ".xcodeproj"
 }
