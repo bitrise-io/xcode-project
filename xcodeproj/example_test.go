@@ -27,7 +27,9 @@ func Example() {
 		entry := scheme.BuildAction.BuildActionEntries[0]
 		targetID := entry.BuildableReference.BlueprintIdentifier
 
-		target, _ := project.Proj.Target(targetID)
-		fmt.Printf("%s scheme's main target: %s\n", scheme.Name, target.Name)
+		target, ok := project.Proj.Target(targetID)
+		if ok {
+			fmt.Printf("%s scheme's main target: %s\n", scheme.Name, target.Name)
+		}
 	}
 }

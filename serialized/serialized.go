@@ -11,7 +11,7 @@ type Object map[string]interface{}
 func (o Object) Value(key string) (interface{}, error) {
 	value, ok := o[key]
 	if !ok {
-		return nil, fmt.Errorf("key (%s) not found", key)
+		return nil, fmt.Errorf("key (%s) not found in:\n%+v", key, o)
 	}
 	return value, nil
 }

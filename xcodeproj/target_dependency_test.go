@@ -64,7 +64,7 @@ const expectedTargetDependency = `{
 		"BuildConfigurationList": {
 			"ID": "13E76E3A1F4AC90A0028096E",
 			"DefaultConfigurationName": "Release",
-			"BuildConfigurations": []
+			"BuildConfigurations": null
 		},
 		"Dependencies": null
 	}

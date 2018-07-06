@@ -23,26 +23,25 @@ const (
 	AbsoluteFileRefType  FileRefType = "absolute"
 	GroupFileRefType     FileRefType = "group"
 	ContainerFileRefType FileRefType = "container"
-	UnknownFileRefType   FileRefType = "unknown"
 )
 
 // TypeAndPath ...
 func (f FileRef) TypeAndPath() (FileRefType, string, error) {
 	s := strings.Split(f.Location, ":")
 	if len(s) != 2 {
-		return UnknownFileRefType, "", fmt.Errorf("unknown file reference location (%s)", f.Location)
+		return "", "", fmt.Errorf("unknown file reference location (%s)", f.Location)
 	}
 
-	fileRefType := UnknownFileRefType
 	switch s[0] {
 	case "absolute":
-		fileRefType = AbsoluteFileRefType
+		return AbsoluteFileRefType, s[1], nil
 	case "group":
-		fileRefType = GroupFileRefType
+		return GroupFileRefType, s[1], nil
 	case "container":
-		fileRefType = ContainerFileRefType
+		return ContainerFileRefType, s[1], nil
+	default:
+		return "", "", fmt.Errorf("")
 	}
-	return fileRefType, s[1], nil
 }
 
 // AbsPath ...

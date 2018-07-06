@@ -17,7 +17,7 @@ func TestValue(t *testing.T) {
 
 	{
 		v, err := o.Value("not_existing_key")
-		require.EqualError(t, err, "key (not_existing_key) not found")
+		require.EqualError(t, err, "key (not_existing_key) not found in:\nmap[key:value]")
 		require.Equal(t, nil, v)
 	}
 }

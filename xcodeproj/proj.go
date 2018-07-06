@@ -6,8 +6,7 @@ import (
 
 // Proj ...
 type Proj struct {
-	ID string
-
+	ID      string
 	Targets []Target
 }
 
@@ -22,9 +21,9 @@ func parseProj(id string, objects serialized.Object) (Proj, error) {
 		return Proj{}, err
 	}
 
-	targets := []Target{}
-	for _, targetID := range rawTargets {
-		target, err := parseTarget(targetID, objects)
+	var targets []Target
+	for i := range rawTargets {
+		target, err := parseTarget(rawTargets[i], objects)
 		if err != nil {
 			return Proj{}, err
 		}

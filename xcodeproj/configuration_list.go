@@ -20,7 +20,7 @@ func parseConfigurationList(id string, objects serialized.Object) (Configuration
 		return ConfigurationList{}, err
 	}
 
-	buildConfigurations := []BuildConfiguration{}
+	var buildConfigurations []BuildConfiguration
 	for _, rawID := range rawBuildConfigurations {
 		buildConfiguration, err := parseBuildConfiguration(rawID, objects)
 		if err != nil {
@@ -30,7 +30,7 @@ func parseConfigurationList(id string, objects serialized.Object) (Configuration
 		buildConfigurations = append(buildConfigurations, buildConfiguration)
 	}
 
-	defaultConfigurationName := ""
+	var defaultConfigurationName string
 	if aDefaultConfigurationName, err := raw.String("defaultConfigurationName"); err == nil {
 		defaultConfigurationName = aDefaultConfigurationName
 	}
