@@ -8,6 +8,7 @@ workflows:
     steps:
     - script:
         title: Install testing packages
+        run_if: .IsCI
         inputs:
         - content: |-
             #!/bin/bash
@@ -22,6 +23,7 @@ workflows:
     - errcheck:
     - go-test:
     - codecov:
+        run_if: .IsCI
         inputs:
         - other_options: -f ${GO_CODE_COVERAGE_REPORT_PATH}
         - CODECOV_TOKEN: "$CODECOV_UPLOAD_TOKEN"

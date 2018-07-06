@@ -9,6 +9,17 @@ import (
 	"howett.net/plist"
 )
 
+func TestParseBuildConfiguration(t *testing.T) {
+	var raw serialized.Object
+	_, err := plist.Unmarshal([]byte(rawBuildConfiguration), &raw)
+	require.NoError(t, err)
+
+	buildConfiguration, err := parseBuildConfiguration("13E76E381F4AC90A0028096E", raw)
+	require.NoError(t, err)
+	// fmt.Printf("buildConfiguration:\n%s\n", )
+	require.Equal(t, expectedBuildConfiguration, pretty.Object(buildConfiguration))
+}
+
 const rawBuildConfiguration = `
 {
 	13E76E381F4AC90A0028096E /* Debug */ = {
@@ -123,14 +134,3 @@ const expectedBuildConfiguration = `{
 		"SDKROOT": "iphoneos"
 	}
 }`
-
-func TestParseBuildConfiguration(t *testing.T) {
-	var raw serialized.Object
-	_, err := plist.Unmarshal([]byte(rawBuildConfiguration), &raw)
-	require.NoError(t, err)
-
-	buildConfiguration, err := parseBuildConfiguration("13E76E381F4AC90A0028096E", raw)
-	require.NoError(t, err)
-	// fmt.Printf("buildConfiguration:\n%s\n", pretty.Object(buildConfiguration))
-	require.Equal(t, expectedBuildConfiguration, pretty.Object(buildConfiguration))
-}

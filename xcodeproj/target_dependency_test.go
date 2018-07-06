@@ -9,6 +9,17 @@ import (
 	"howett.net/plist"
 )
 
+func TestParseTargetDependency(t *testing.T) {
+	var raw serialized.Object
+	_, err := plist.Unmarshal([]byte(rawTargetDependency), &raw)
+	require.NoError(t, err)
+
+	targetDependency, err := parseTargetDependency("13E76E511F4AC94F0028096E", raw)
+	require.NoError(t, err)
+	// fmt.Printf("targetDependency:\n%s\n", pretty.Object(targetDependency))
+	require.Equal(t, expectedTargetDependency, pretty.Object(targetDependency))
+}
+
 const rawTargetDependency = `
 {
 	13E76E511F4AC94F0028096E /* PBXTargetDependency */ = {
@@ -47,6 +58,7 @@ const rawTargetDependency = `
 const expectedTargetDependency = `{
 	"ID": "13E76E511F4AC94F0028096E",
 	"Target": {
+		"Type": "PBXNativeTarget",
 		"ID": "13E76E461F4AC94F0028096E",
 		"Name": "share-extension",
 		"BuildConfigurationList": {
@@ -57,14 +69,3 @@ const expectedTargetDependency = `{
 		"Dependencies": null
 	}
 }`
-
-func TestParseTargetDependency(t *testing.T) {
-	var raw serialized.Object
-	_, err := plist.Unmarshal([]byte(rawTargetDependency), &raw)
-	require.NoError(t, err)
-
-	targetDependency, err := parseTargetDependency("13E76E511F4AC94F0028096E", raw)
-	require.NoError(t, err)
-	// fmt.Printf("targetDependency:\n%s\n", pretty.Object(targetDependency))
-	require.Equal(t, expectedTargetDependency, pretty.Object(targetDependency))
-}

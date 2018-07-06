@@ -9,6 +9,17 @@ import (
 	"howett.net/plist"
 )
 
+func TestParseProj(t *testing.T) {
+	var raw serialized.Object
+	_, err := plist.Unmarshal([]byte(rawProj), &raw)
+	require.NoError(t, err)
+
+	proj, err := parseProj("13E76E061F4AC90A0028096E", raw)
+	require.NoError(t, err)
+	// fmt.Printf("proj:\n%s\n", pretty.Object(proj))
+	require.Equal(t, expectedProj, pretty.Object(proj))
+}
+
 const rawProj = `
 {
 	13E76E061F4AC90A0028096E /* Project object */ = {
@@ -109,8 +120,9 @@ const rawProj = `
 
 const expectedProj = `{
 	"ID": "13E76E061F4AC90A0028096E",
-	"NativeTargets": [
+	"Targets": [
 		{
+			"Type": "PBXNativeTarget",
 			"ID": "13E76E301F4AC90A0028096E",
 			"Name": "code-sign-testUITests",
 			"BuildConfigurationList": {
@@ -140,13 +152,3 @@ const expectedProj = `{
 		}
 	]
 }`
-
-func TestParseProj(t *testing.T) {
-	var raw serialized.Object
-	_, err := plist.Unmarshal([]byte(rawProj), &raw)
-	require.NoError(t, err)
-
-	proj, err := parseProj("13E76E061F4AC90A0028096E", raw)
-	require.NoError(t, err)
-	require.Equal(t, expectedProj, pretty.Object(proj))
-}

@@ -6,8 +6,9 @@ import (
 
 // Proj ...
 type Proj struct {
-	ID            string
-	NativeTargets []NativeTarget
+	ID string
+
+	Targets []Target
 }
 
 func parseProj(id string, objects serialized.Object) (Proj, error) {
@@ -21,9 +22,9 @@ func parseProj(id string, objects serialized.Object) (Proj, error) {
 		return Proj{}, err
 	}
 
-	targets := []NativeTarget{}
+	targets := []Target{}
 	for _, targetID := range rawTargets {
-		target, err := parseNativeTarget(targetID, objects)
+		target, err := parseTarget(targetID, objects)
 		if err != nil {
 			return Proj{}, err
 		}
@@ -31,17 +32,17 @@ func parseProj(id string, objects serialized.Object) (Proj, error) {
 	}
 
 	return Proj{
-		ID:            id,
-		NativeTargets: targets,
+		ID:      id,
+		Targets: targets,
 	}, nil
 }
 
-// NativeTarget ...
-func (p Proj) NativeTarget(id string) (NativeTarget, bool) {
-	for _, target := range p.NativeTargets {
+// Target ...
+func (p Proj) Target(id string) (Target, bool) {
+	for _, target := range p.Targets {
 		if target.ID == id {
 			return target, true
 		}
 	}
-	return NativeTarget{}, false
+	return Target{}, false
 }

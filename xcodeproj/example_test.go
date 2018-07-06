@@ -10,7 +10,7 @@ func Example() {
 		panic(err)
 	}
 
-	for _, target := range project.Proj.NativeTargets {
+	for _, target := range project.Proj.Targets {
 		fmt.Printf("%s target default configuration: %s\n", target.Name, target.BuildConfigurationList.DefaultConfigurationName)
 
 		buildConfiguration := target.BuildConfigurationList.BuildConfigurations[0]
@@ -27,7 +27,7 @@ func Example() {
 		entry := scheme.BuildAction.BuildActionEntries[0]
 		targetID := entry.BuildableReference.BlueprintIdentifier
 
-		target, _ := project.Proj.NativeTarget(targetID)
+		target, _ := project.Proj.Target(targetID)
 		fmt.Printf("%s scheme's main target: %s\n", scheme.Name, target.Name)
 	}
 }

@@ -9,6 +9,17 @@ import (
 	"howett.net/plist"
 )
 
+func TestParseConfigurationList(t *testing.T) {
+	var raw serialized.Object
+	_, err := plist.Unmarshal([]byte(rawConfigurationList), &raw)
+	require.NoError(t, err)
+
+	configurationList, err := parseConfigurationList("13E76E3A1F4AC90A0028096E", raw)
+	require.NoError(t, err)
+	// fmt.Printf("configurationList:\n%s\n", pretty.Object(configurationList))
+	require.Equal(t, expectedConfigurationList, pretty.Object(configurationList))
+}
+
 const rawConfigurationList = `
 {
 	13E76E3A1F4AC90A0028096E /* Build configuration list for PBXNativeTarget "code-sign-test" */ = {
@@ -98,14 +109,3 @@ const expectedConfigurationList = `{
 		}
 	]
 }`
-
-func TestParseConfigurationList(t *testing.T) {
-	var raw serialized.Object
-	_, err := plist.Unmarshal([]byte(rawConfigurationList), &raw)
-	require.NoError(t, err)
-
-	configurationList, err := parseConfigurationList("13E76E3A1F4AC90A0028096E", raw)
-	require.NoError(t, err)
-	// fmt.Printf("configurationList:\n%s\n", pretty.Object(configurationList))
-	require.Equal(t, expectedConfigurationList, pretty.Object(configurationList))
-}

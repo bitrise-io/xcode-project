@@ -9,6 +9,151 @@ import (
 	"howett.net/plist"
 )
 
+func TestParseTarget(t *testing.T) {
+	t.Log("PBXNativeTarget")
+	{
+		var raw serialized.Object
+		_, err := plist.Unmarshal([]byte(rawNativeTarget), &raw)
+		require.NoError(t, err)
+
+		target, err := parseTarget("13E76E0D1F4AC90A0028096E", raw)
+		require.NoError(t, err)
+		// fmt.Printf("target:\n%s\n", pretty.Object(target))
+		require.Equal(t, expectedNativeTarget, pretty.Object(target))
+	}
+
+	t.Log("PBXAggregateTarget")
+	{
+		var raw serialized.Object
+		_, err := plist.Unmarshal([]byte(rawAggregateTarget), &raw)
+		require.NoError(t, err)
+
+		target, err := parseTarget("FD55DAD914CE0B0000F84D24", raw)
+		require.NoError(t, err)
+		// fmt.Printf("target:\n%s\n", pretty.Object(target))
+		require.Equal(t, expectedAggregateTarget, pretty.Object(target))
+	}
+
+	t.Log("PBXLegacyTarget")
+	{
+		var raw serialized.Object
+		_, err := plist.Unmarshal([]byte(rawLegacyTarget), &raw)
+		require.NoError(t, err)
+
+		target, err := parseTarget("407952600CEA391500E202DC", raw)
+		require.NoError(t, err)
+		// fmt.Printf("target:\n%s\n", pretty.Object(target))
+		require.Equal(t, expectedLegacyTarget, pretty.Object(target))
+	}
+}
+
+const rawLegacyTarget = `{
+	407952600CEA391500E202DC /* build */ = {
+		isa = PBXLegacyTarget;
+		buildArgumentsString = all;
+		buildConfigurationList = 407952610CEA393300E202DC /* Build configuration list for PBXLegacyTarget "build" */;
+		buildPhases = (
+		);
+		buildToolPath = /usr/bin/make;
+		buildWorkingDirectory = firmware;
+		dependencies = (
+		);
+		name = build;
+		passBuildSettingsInEnvironment = 1;
+		productName = "Build All";
+	};
+
+	407952610CEA393300E202DC /* Build configuration list for PBXLegacyTarget "build" */ = {
+		isa = XCConfigurationList;
+		buildConfigurations = (
+			407952630CEA393300E202DC /* Release */,
+		);
+		defaultConfigurationIsVisible = 0;
+		defaultConfigurationName = Release;
+	};
+
+	407952630CEA393300E202DC /* Release */ = {
+		isa = XCBuildConfiguration;
+		buildSettings = {
+			PATH = "$(PATH):/usr/local/CrossPack-AVR/bin";
+		};
+		name = Release;
+	};
+}`
+
+const expectedLegacyTarget = `{
+	"Type": "PBXLegacyTarget",
+	"ID": "407952600CEA391500E202DC",
+	"Name": "build",
+	"BuildConfigurationList": {
+		"ID": "407952610CEA393300E202DC",
+		"DefaultConfigurationName": "Release",
+		"BuildConfigurations": [
+			{
+				"ID": "407952630CEA393300E202DC",
+				"Name": "Release",
+				"BuildSettings": {
+					"PATH": "$(PATH):/usr/local/CrossPack-AVR/bin"
+				}
+			}
+		]
+	},
+	"Dependencies": null
+}`
+
+const rawAggregateTarget = `{
+	FD55DAD914CE0B0000F84D24 /* rpcsvc */ = {
+		isa = PBXAggregateTarget;
+		buildConfigurationList = FD55DADA14CE0B0000F84D24 /* Build configuration list for PBXAggregateTarget "rpcsvc" */;
+		buildPhases = (
+			FD55DADC14CE0B0700F84D24 /* Run Script */,
+		);
+		dependencies = (
+		);
+		name = rpcsvc;
+		productName = rpcsvc;
+	};
+
+	FD55DADA14CE0B0000F84D24 /* Build configuration list for PBXAggregateTarget "rpcsvc" */ = {
+		isa = XCConfigurationList;
+		buildConfigurations = (
+			FD55DADB14CE0B0000F84D24 /* Release */,
+		);
+		defaultConfigurationIsVisible = 0;
+		defaultConfigurationName = Release;
+	};
+
+	FD55DADB14CE0B0000F84D24 /* Release */ = {
+		isa = XCBuildConfiguration;
+		buildSettings = {
+			INSTALLHDRS_SCRIPT_PHASE = YES;
+			PRODUCT_NAME = "$(TARGET_NAME)";
+		};
+		name = Release;
+	};
+}`
+
+const expectedAggregateTarget = `{
+	"Type": "PBXAggregateTarget",
+	"ID": "FD55DAD914CE0B0000F84D24",
+	"Name": "rpcsvc",
+	"BuildConfigurationList": {
+		"ID": "FD55DADA14CE0B0000F84D24",
+		"DefaultConfigurationName": "Release",
+		"BuildConfigurations": [
+			{
+				"ID": "FD55DADB14CE0B0000F84D24",
+				"Name": "Release",
+				"BuildSettings": {
+					"INSTALLHDRS_SCRIPT_PHASE": "YES",
+					"PRODUCT_NAME": "$(TARGET_NAME)"
+				}
+			}
+		]
+	},
+	"Dependencies": null
+}`
+
 const rawNativeTarget = `{
 	13E76E0D1F4AC90A0028096E /* code-sign-test */ = {
 		isa = PBXNativeTarget;
@@ -103,6 +248,7 @@ const rawNativeTarget = `{
 }`
 
 const expectedNativeTarget = `{
+	"Type": "PBXNativeTarget",
 	"ID": "13E76E0D1F4AC90A0028096E",
 	"Name": "code-sign-test",
 	"BuildConfigurationList": {
@@ -149,6 +295,7 @@ const expectedNativeTarget = `{
 		{
 			"ID": "13E76E511F4AC94F0028096E",
 			"Target": {
+				"Type": "PBXNativeTarget",
 				"ID": "13E76E461F4AC94F0028096E",
 				"Name": "share-extension",
 				"BuildConfigurationList": {
@@ -196,14 +343,3 @@ const expectedNativeTarget = `{
 		}
 	]
 }`
-
-func TestParseNativeTarget(t *testing.T) {
-	var raw serialized.Object
-	_, err := plist.Unmarshal([]byte(rawNativeTarget), &raw)
-	require.NoError(t, err)
-
-	nativeTarget, err := parseNativeTarget("13E76E0D1F4AC90A0028096E", raw)
-	require.NoError(t, err)
-	// fmt.Printf("nativeTarget:\n%s\n", pretty.Object(nativeTarget))
-	require.Equal(t, expectedNativeTarget, pretty.Object(nativeTarget))
-}

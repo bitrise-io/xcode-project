@@ -5,7 +5,7 @@ import "github.com/bitrise-tools/xcode-project/serialized"
 // TargetDependency ...
 type TargetDependency struct {
 	ID     string
-	Target NativeTarget
+	Target Target
 }
 
 func parseTargetDependency(id string, objects serialized.Object) (TargetDependency, error) {
@@ -19,7 +19,7 @@ func parseTargetDependency(id string, objects serialized.Object) (TargetDependen
 		return TargetDependency{}, err
 	}
 
-	target, err := parseNativeTarget(targetID, objects)
+	target, err := parseTarget(targetID, objects)
 	if err != nil {
 		return TargetDependency{}, err
 	}
