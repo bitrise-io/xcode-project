@@ -49,6 +49,11 @@ func TestOpen(t *testing.T) {
 	}
 }
 
+func TestIsWorkspace(t *testing.T) {
+	require.True(t, IsWorkspace("./BitriseSample.xcworkspace"))
+	require.False(t, IsWorkspace("./BitriseSample.xcodeproj"))
+}
+
 const workspaceContentsContent = `<?xml version="1.0" encoding="UTF-8"?>
 <Workspace
    version = "1.0">
