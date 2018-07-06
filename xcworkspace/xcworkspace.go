@@ -105,3 +105,8 @@ func Open(pth string) (Workspace, error) {
 
 	return workspace, nil
 }
+
+// IsWorkspace ...
+func IsWorkspace(pth string) bool {
+	return strings.HasSuffix(pth, ".xcworkspace")
+}
