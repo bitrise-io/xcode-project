@@ -4,38 +4,48 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/bitrise-tools/xcode-project/testhelper"
+	"github.com/stretchr/testify/require"
 )
 
 func TestOpen(t *testing.T) {
-	pth := testhelper.CreateTmpFile(t, "contents.xcworkspacedata", workspaceContentsContent)
-	dir := filepath.Dir(pth)
+	workspaceContentsPth := testhelper.CreateTmpFile(t, "contents.xcworkspacedata", workspaceContentsContent)
+	workspacePth := filepath.Dir(workspaceContentsPth)
+	parentDir := filepath.Dir(workspacePth)
 
-	workspace, err := Open(dir)
+	workspace, err := Open(workspacePth)
 	require.NoError(t, err)
 
-	require.Equal(t, filepath.Base(filepath.Dir(pth)), workspace.Name)
-	require.Equal(t, filepath.Dir(pth), workspace.Path)
-
-	require.Equal(t, 1, len(workspace.Groups))
+	require.Equal(t, filepath.Base(workspacePth), workspace.Name)
+	require.Equal(t, workspacePth, workspace.Path)
 
 	{
 		require.Equal(t, 1, len(workspace.FileRefs))
 		require.Equal(t, "group:XcodeProj.xcodeproj", workspace.FileRefs[0].Location)
 
-		pth, err := workspace.FileRefs[0].AbsPath(dir)
+		pth, err := workspace.FileRefs[0].AbsPath(parentDir)
 		require.NoError(t, err)
-		require.Equal(t, filepath.Join(dir, "XcodeProj.xcodeproj"), pth)
+		require.Equal(t, filepath.Join(parentDir, "XcodeProj.xcodeproj"), pth)
 	}
 
 	{
-		group := workspace.Groups[0]
-		require.Equal(t, 2, len(group.FileRefs))
+		require.Equal(t, 1, len(workspace.Groups))
 
+		group := workspace.Groups[0]
+		require.Equal(t, "group:Group", group.Location)
+
+		groupPth, err := group.AbsPath(parentDir)
+		require.NoError(t, err)
+		require.Equal(t, filepath.Join(parentDir, "Group"), groupPth)
+
+		require.Equal(t, 2, len(group.FileRefs))
 		require.Equal(t, "group:../XcodeProj/AppDelegate.swift", group.FileRefs[0].Location)
 		require.Equal(t, "group:XcodeProj.xcodeproj", group.FileRefs[1].Location)
+
+		groupFileRef := group.FileRefs[0]
+		groupFileRefPth, err := groupFileRef.AbsPath(groupPth)
+		require.NoError(t, err)
+		require.Equal(t, filepath.Join(parentDir, "XcodeProj/AppDelegate.swift"), groupFileRefPth)
 	}
 }
 

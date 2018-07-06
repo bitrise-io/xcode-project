@@ -6,9 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/bitrise-io/go-utils/pathutil"
-
 	"github.com/bitrise-io/go-utils/fileutil"
+	"github.com/bitrise-io/go-utils/pathutil"
 )
 
 // FileRef ...
@@ -47,7 +46,7 @@ func (f FileRef) TypeAndPath() (FileRefType, string, error) {
 }
 
 // AbsPath ...
-func (f FileRef) AbsPath(workspaceDir string) (string, error) {
+func (f FileRef) AbsPath(dir string) (string, error) {
 	t, pth, err := f.TypeAndPath()
 	if err != nil {
 		return "", err
@@ -58,7 +57,7 @@ func (f FileRef) AbsPath(workspaceDir string) (string, error) {
 	case AbsoluteFileRefType:
 		absPth = pth
 	case GroupFileRefType, ContainerFileRefType:
-		absPth = filepath.Join(workspaceDir, pth)
+		absPth = filepath.Join(dir, pth)
 	}
 
 	return pathutil.AbsPath(absPth)
@@ -66,7 +65,18 @@ func (f FileRef) AbsPath(workspaceDir string) (string, error) {
 
 // Group ...
 type Group struct {
+	Location string    `xml:"location,attr"`
 	FileRefs []FileRef `xml:"FileRef"`
+}
+
+// AbsPath ...
+func (g Group) AbsPath(dir string) (string, error) {
+	s := strings.Split(g.Location, ":")
+	if len(s) != 2 {
+		return "", fmt.Errorf("unknown group location (%s)", g.Location)
+	}
+	pth := filepath.Join(dir, s[1])
+	return pathutil.AbsPath(pth)
 }
 
 // Workspace ...
