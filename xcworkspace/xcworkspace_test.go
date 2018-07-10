@@ -8,6 +8,44 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestWorkspaceFileLocations(t *testing.T) {
+	workspaceContentsPth := testhelper.CreateTmpFile(t, "contents.xcworkspacedata", workspaceContentsContent)
+	workspacePth := filepath.Dir(workspaceContentsPth)
+
+	workspace, err := Open(workspacePth)
+	require.NoError(t, err)
+
+	fileLocations, err := workspace.FileLocations()
+	require.NoError(t, err)
+	require.Equal(t, []string{
+		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/XcodeProj.xcodeproj",
+		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/Group/SubProject/SubProject.xcodeproj",
+		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/Group/SubProject/SubProjectTests/Info.plist",
+		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/Group/SubProject/SubProject/ViewController.swift",
+		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/Group/SubProject/SubProject/AppDelegate.swift",
+		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/Group/SubProject/SubProject/Info.plist",
+		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/Group/SubProject/SubProject/Assets.xcassets/Contents.json",
+		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/Group/SubProject/SubProject/Assets.xcassets/AppIcon.appiconset/Contents.json",
+		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/Group/SubProject/SubProject/Base.lproj/LaunchScreen.storyboard",
+		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/Group/SubProject/SubProject/Base.lproj/Main.storyboard",
+	}, fileLocations)
+}
+
+func TestWorkspaceProjectFileLocations(t *testing.T) {
+	workspaceContentsPth := testhelper.CreateTmpFile(t, "contents.xcworkspacedata", workspaceContentsContent)
+	workspacePth := filepath.Dir(workspaceContentsPth)
+
+	workspace, err := Open(workspacePth)
+	require.NoError(t, err)
+
+	fileLocations, err := workspace.ProjectFileLocations()
+	require.NoError(t, err)
+	require.Equal(t, []string{
+		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/XcodeProj.xcodeproj",
+		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/Group/SubProject/SubProject.xcodeproj",
+	}, fileLocations)
+}
+
 func TestOpen(t *testing.T) {
 	workspaceContentsPth := testhelper.CreateTmpFile(t, "contents.xcworkspacedata", workspaceContentsContent)
 	workspacePth := filepath.Dir(workspaceContentsPth)
@@ -34,11 +72,48 @@ const workspaceContentsContent = `<?xml version="1.0" encoding="UTF-8"?>
    <Group
       location = "group:Group"
       name = "Group">
+      <Group
+         location = "group:SubProject/SubProject"
+         name = "SubProject">
+         <FileRef
+            location = "group:../SubProjectTests/Info.plist">
+         </FileRef>
+         <FileRef
+            location = "group:ViewController.swift">
+         </FileRef>
+         <Group
+            location = "group:Assets.xcassets"
+            name = "Assets.xcassets">
+            <Group
+               location = "group:AppIcon.appiconset"
+               name = "AppIcon.appiconset">
+               <FileRef
+                  location = "group:Contents.json">
+               </FileRef>
+            </Group>
+            <FileRef
+               location = "group:Contents.json">
+            </FileRef>
+         </Group>
+         <Group
+            location = "group:Base.lproj"
+            name = "Base.lproj">
+            <FileRef
+               location = "group:LaunchScreen.storyboard">
+            </FileRef>
+            <FileRef
+               location = "group:Main.storyboard">
+            </FileRef>
+         </Group>
+         <FileRef
+            location = "group:AppDelegate.swift">
+         </FileRef>
+         <FileRef
+            location = "group:Info.plist">
+         </FileRef>
+      </Group>
       <FileRef
-         location = "group:../XcodeProj/AppDelegate.swift">
-      </FileRef>
-      <FileRef
-         location = "group:XcodeProj.xcodeproj">
+         location = "group:SubProject/SubProject.xcodeproj">
       </FileRef>
    </Group>
    <FileRef
