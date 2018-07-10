@@ -2,81 +2,12 @@ package xcworkspace
 
 import (
 	"encoding/xml"
-	"fmt"
 	"path/filepath"
 	"strings"
 
 	"github.com/bitrise-io/go-utils/fileutil"
-	"github.com/bitrise-io/go-utils/pathutil"
+	"github.com/bitrise-tools/xcode-project/xcodeproj"
 )
-
-// FileRef ...
-type FileRef struct {
-	Location string `xml:"location,attr"`
-}
-
-// FileRefType ...
-type FileRefType string
-
-// Known FileRefTypes
-const (
-	AbsoluteFileRefType  FileRefType = "absolute"
-	GroupFileRefType     FileRefType = "group"
-	ContainerFileRefType FileRefType = "container"
-)
-
-// TypeAndPath ...
-func (f FileRef) TypeAndPath() (FileRefType, string, error) {
-	s := strings.Split(f.Location, ":")
-	if len(s) != 2 {
-		return "", "", fmt.Errorf("unknown file reference location (%s)", f.Location)
-	}
-
-	switch s[0] {
-	case "absolute":
-		return AbsoluteFileRefType, s[1], nil
-	case "group":
-		return GroupFileRefType, s[1], nil
-	case "container":
-		return ContainerFileRefType, s[1], nil
-	default:
-		return "", "", fmt.Errorf("")
-	}
-}
-
-// AbsPath ...
-func (f FileRef) AbsPath(dir string) (string, error) {
-	t, pth, err := f.TypeAndPath()
-	if err != nil {
-		return "", err
-	}
-
-	var absPth string
-	switch t {
-	case AbsoluteFileRefType:
-		absPth = pth
-	case GroupFileRefType, ContainerFileRefType:
-		absPth = filepath.Join(dir, pth)
-	}
-
-	return pathutil.AbsPath(absPth)
-}
-
-// Group ...
-type Group struct {
-	Location string    `xml:"location,attr"`
-	FileRefs []FileRef `xml:"FileRef"`
-}
-
-// AbsPath ...
-func (g Group) AbsPath(dir string) (string, error) {
-	s := strings.Split(g.Location, ":")
-	if len(s) != 2 {
-		return "", fmt.Errorf("unknown group location (%s)", g.Location)
-	}
-	pth := filepath.Join(dir, s[1])
-	return pathutil.AbsPath(pth)
-}
 
 // Workspace ...
 type Workspace struct {
@@ -85,6 +16,46 @@ type Workspace struct {
 
 	Name string
 	Path string
+}
+
+// FileLocations ...
+func (w Workspace) FileLocations() ([]string, error) {
+	var fileLocations []string
+
+	for _, fileRef := range w.FileRefs {
+		pth, err := fileRef.AbsPath(filepath.Dir(w.Path))
+		if err != nil {
+			return nil, err
+		}
+
+		fileLocations = append(fileLocations, pth)
+	}
+
+	for _, group := range w.Groups {
+		groupFileLocations, err := group.FileLocations(filepath.Dir(w.Path))
+		if err != nil {
+			return nil, err
+		}
+
+		fileLocations = append(fileLocations, groupFileLocations...)
+	}
+
+	return fileLocations, nil
+}
+
+// ProjectFileLocations ...
+func (w Workspace) ProjectFileLocations() ([]string, error) {
+	var projectLocations []string
+	fileLocations, err := w.FileLocations()
+	if err != nil {
+		return nil, err
+	}
+	for _, fileLocation := range fileLocations {
+		if xcodeproj.IsXcodeProj(fileLocation) {
+			projectLocations = append(projectLocations, fileLocation)
+		}
+	}
+	return projectLocations, nil
 }
 
 // Open ...

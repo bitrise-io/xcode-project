@@ -8,45 +8,61 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestWorkspaceFileLocations(t *testing.T) {
+	workspaceContentsPth := testhelper.CreateTmpFile(t, "contents.xcworkspacedata", workspaceContentsContent)
+	workspacePth := filepath.Dir(workspaceContentsPth)
+
+	workspace, err := Open(workspacePth)
+	require.NoError(t, err)
+
+	workspaceDir := filepath.Dir(workspacePth)
+
+	fileLocations, err := workspace.FileLocations()
+	require.NoError(t, err)
+	require.Equal(t, []string{
+		filepath.Join(workspaceDir, "XcodeProj.xcodeproj"),
+		filepath.Join(workspaceDir, "Group/SubProject/SubProject.xcodeproj"),
+		filepath.Join(workspaceDir, "Group/SubProject/SubProjectTests/Info.plist"),
+		filepath.Join(workspaceDir, "Group/SubProject/SubProject/ViewController.swift"),
+		filepath.Join(workspaceDir, "Group/SubProject/SubProject/AppDelegate.swift"),
+		filepath.Join(workspaceDir, "Group/SubProject/SubProject/Info.plist"),
+		filepath.Join(workspaceDir, "Group/SubProject/SubProject/Assets.xcassets/Contents.json"),
+		filepath.Join(workspaceDir, "Group/SubProject/SubProject/Assets.xcassets/AppIcon.appiconset/Contents.json"),
+		filepath.Join(workspaceDir, "Group/SubProject/SubProject/Base.lproj/LaunchScreen.storyboard"),
+		filepath.Join(workspaceDir, "Group/SubProject/SubProject/Base.lproj/Main.storyboard"),
+	}, fileLocations)
+}
+
+func TestWorkspaceProjectFileLocations(t *testing.T) {
+	workspaceContentsPth := testhelper.CreateTmpFile(t, "contents.xcworkspacedata", workspaceContentsContent)
+	workspacePth := filepath.Dir(workspaceContentsPth)
+
+	workspace, err := Open(workspacePth)
+	require.NoError(t, err)
+
+	workspaceDir := filepath.Dir(workspacePth)
+
+	fileLocations, err := workspace.ProjectFileLocations()
+	require.NoError(t, err)
+	require.Equal(t, []string{
+		filepath.Join(workspaceDir, "XcodeProj.xcodeproj"),
+		filepath.Join(workspaceDir, "Group/SubProject/SubProject.xcodeproj"),
+	}, fileLocations)
+}
+
 func TestOpen(t *testing.T) {
 	workspaceContentsPth := testhelper.CreateTmpFile(t, "contents.xcworkspacedata", workspaceContentsContent)
 	workspacePth := filepath.Dir(workspaceContentsPth)
-	parentDir := filepath.Dir(workspacePth)
 
 	workspace, err := Open(workspacePth)
 	require.NoError(t, err)
 
 	require.Equal(t, filepath.Base(workspacePth), workspace.Name)
 	require.Equal(t, workspacePth, workspace.Path)
-
-	{
-		require.Equal(t, 1, len(workspace.FileRefs))
-		require.Equal(t, "group:XcodeProj.xcodeproj", workspace.FileRefs[0].Location)
-
-		pth, err := workspace.FileRefs[0].AbsPath(parentDir)
-		require.NoError(t, err)
-		require.Equal(t, filepath.Join(parentDir, "XcodeProj.xcodeproj"), pth)
-	}
-
-	{
-		require.Equal(t, 1, len(workspace.Groups))
-
-		group := workspace.Groups[0]
-		require.Equal(t, "group:Group", group.Location)
-
-		groupPth, err := group.AbsPath(parentDir)
-		require.NoError(t, err)
-		require.Equal(t, filepath.Join(parentDir, "Group"), groupPth)
-
-		require.Equal(t, 2, len(group.FileRefs))
-		require.Equal(t, "group:../XcodeProj/AppDelegate.swift", group.FileRefs[0].Location)
-		require.Equal(t, "group:XcodeProj.xcodeproj", group.FileRefs[1].Location)
-
-		groupFileRef := group.FileRefs[0]
-		groupFileRefPth, err := groupFileRef.AbsPath(groupPth)
-		require.NoError(t, err)
-		require.Equal(t, filepath.Join(parentDir, "XcodeProj/AppDelegate.swift"), groupFileRefPth)
-	}
+	require.Equal(t, 1, len(workspace.FileRefs))
+	require.Equal(t, "group:XcodeProj.xcodeproj", workspace.FileRefs[0].Location)
+	require.Equal(t, 1, len(workspace.Groups))
+	require.Equal(t, "group:Group", workspace.Groups[0].Location)
 }
 
 func TestIsWorkspace(t *testing.T) {
@@ -60,11 +76,48 @@ const workspaceContentsContent = `<?xml version="1.0" encoding="UTF-8"?>
    <Group
       location = "group:Group"
       name = "Group">
+      <Group
+         location = "group:SubProject/SubProject"
+         name = "SubProject">
+         <FileRef
+            location = "group:../SubProjectTests/Info.plist">
+         </FileRef>
+         <FileRef
+            location = "group:ViewController.swift">
+         </FileRef>
+         <Group
+            location = "group:Assets.xcassets"
+            name = "Assets.xcassets">
+            <Group
+               location = "group:AppIcon.appiconset"
+               name = "AppIcon.appiconset">
+               <FileRef
+                  location = "group:Contents.json">
+               </FileRef>
+            </Group>
+            <FileRef
+               location = "group:Contents.json">
+            </FileRef>
+         </Group>
+         <Group
+            location = "group:Base.lproj"
+            name = "Base.lproj">
+            <FileRef
+               location = "group:LaunchScreen.storyboard">
+            </FileRef>
+            <FileRef
+               location = "group:Main.storyboard">
+            </FileRef>
+         </Group>
+         <FileRef
+            location = "group:AppDelegate.swift">
+         </FileRef>
+         <FileRef
+            location = "group:Info.plist">
+         </FileRef>
+      </Group>
       <FileRef
-         location = "group:../XcodeProj/AppDelegate.swift">
-      </FileRef>
-      <FileRef
-         location = "group:XcodeProj.xcodeproj">
+         location = "group:SubProject/SubProject.xcodeproj">
       </FileRef>
    </Group>
    <FileRef
