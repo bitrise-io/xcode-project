@@ -38,7 +38,7 @@ func (f FileRef) TypeAndPath() (FileRefType, string, error) {
 	case "container":
 		return ContainerFileRefType, s[1], nil
 	default:
-		return "", "", fmt.Errorf("")
+		return "", "", fmt.Errorf("unknown file reference type: %s", s[0])
 	}
 }
 
