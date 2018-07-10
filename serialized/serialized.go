@@ -66,28 +66,3 @@ func (o Object) Object(key string) (Object, error) {
 
 	return casted, nil
 }
-
-// ObjectSlice ...
-func (o Object) ObjectSlice(key string) ([]Object, error) {
-	value, err := o.Value(key)
-	if err != nil {
-		return nil, err
-	}
-
-	casted, ok := value.([]interface{})
-	if !ok {
-		return nil, NewTypeCastError(key, value, []interface{}{})
-	}
-
-	slice := []Object{}
-	for _, v := range casted {
-		item, ok := v.(Object)
-		if !ok {
-			return nil, NewTypeCastError(key, casted, Object{})
-		}
-
-		slice = append(slice, item)
-	}
-
-	return slice, nil
-}

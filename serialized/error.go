@@ -10,7 +10,7 @@ type KeyNotFoundError struct {
 
 // Error ...
 func (e KeyNotFoundError) Error() string {
-	return fmt.Sprintf("key (%s) not found in:\n%+v", e.key, e.object)
+	return fmt.Sprintf("key: %T(%#v) not found in: %T(%#v)", e.key, e.key, e.object, e.object)
 }
 
 // NewKeyNotFoundError ...
@@ -50,5 +50,5 @@ func IsTypeCastError(err error) bool {
 
 // Error ...
 func (e TypeCastError) Error() string {
-	return fmt.Sprintf("value (%+v) for key (%s) is not a %s", e.value, e.key, e.expectedType)
+	return fmt.Sprintf("value: %T(%#v) for key: %T(%#v) can not be casted to: %s", e.value, e.value, e.key, e.key, e.expectedType)
 }
