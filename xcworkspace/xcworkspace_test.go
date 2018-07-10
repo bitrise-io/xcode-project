@@ -15,19 +15,21 @@ func TestWorkspaceFileLocations(t *testing.T) {
 	workspace, err := Open(workspacePth)
 	require.NoError(t, err)
 
+	workspaceDir := filepath.Dir(workspacePth)
+
 	fileLocations, err := workspace.FileLocations()
 	require.NoError(t, err)
 	require.Equal(t, []string{
-		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/XcodeProj.xcodeproj",
-		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/Group/SubProject/SubProject.xcodeproj",
-		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/Group/SubProject/SubProjectTests/Info.plist",
-		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/Group/SubProject/SubProject/ViewController.swift",
-		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/Group/SubProject/SubProject/AppDelegate.swift",
-		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/Group/SubProject/SubProject/Info.plist",
-		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/Group/SubProject/SubProject/Assets.xcassets/Contents.json",
-		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/Group/SubProject/SubProject/Assets.xcassets/AppIcon.appiconset/Contents.json",
-		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/Group/SubProject/SubProject/Base.lproj/LaunchScreen.storyboard",
-		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/Group/SubProject/SubProject/Base.lproj/Main.storyboard",
+		filepath.Join(workspaceDir, "XcodeProj.xcodeproj"),
+		filepath.Join(workspaceDir, "Group/SubProject/SubProject.xcodeproj"),
+		filepath.Join(workspaceDir, "Group/SubProject/SubProjectTests/Info.plist"),
+		filepath.Join(workspaceDir, "Group/SubProject/SubProject/ViewController.swift"),
+		filepath.Join(workspaceDir, "Group/SubProject/SubProject/AppDelegate.swift"),
+		filepath.Join(workspaceDir, "Group/SubProject/SubProject/Info.plist"),
+		filepath.Join(workspaceDir, "Group/SubProject/SubProject/Assets.xcassets/Contents.json"),
+		filepath.Join(workspaceDir, "Group/SubProject/SubProject/Assets.xcassets/AppIcon.appiconset/Contents.json"),
+		filepath.Join(workspaceDir, "Group/SubProject/SubProject/Base.lproj/LaunchScreen.storyboard"),
+		filepath.Join(workspaceDir, "Group/SubProject/SubProject/Base.lproj/Main.storyboard"),
 	}, fileLocations)
 }
 
@@ -38,11 +40,13 @@ func TestWorkspaceProjectFileLocations(t *testing.T) {
 	workspace, err := Open(workspacePth)
 	require.NoError(t, err)
 
+	workspaceDir := filepath.Dir(workspacePth)
+
 	fileLocations, err := workspace.ProjectFileLocations()
 	require.NoError(t, err)
 	require.Equal(t, []string{
-		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/XcodeProj.xcodeproj",
-		"/var/folders/1v/tm3rd7xn4hz_hfk24bbm4c8h0000gn/T/Group/SubProject/SubProject.xcodeproj",
+		filepath.Join(workspaceDir, "XcodeProj.xcodeproj"),
+		filepath.Join(workspaceDir, "Group/SubProject/SubProject.xcodeproj"),
 	}, fileLocations)
 }
 
