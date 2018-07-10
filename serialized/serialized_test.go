@@ -30,11 +30,17 @@ func TestString(t *testing.T) {
 		require.Equal(t, "value", v)
 	}
 
+	o := Object(map[string]interface{}{"key": 0})
 	{
-		o := Object(map[string]interface{}{"key": 0})
 		v, err := o.String("key")
 		require.EqualError(t, err, "value (0) for key (key) is not a string")
 		require.Equal(t, "", v)
+	}
+
+	{
+		v, err := o.Object("key")
+		require.EqualError(t, err, "value (0) for key (key) is not a map[string]interface {}")
+		require.Equal(t, Object(nil), v)
 	}
 }
 
