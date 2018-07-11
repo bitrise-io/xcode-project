@@ -18,7 +18,7 @@ func Example() {
 		fmt.Printf("%s target bundle id: %s\n", target.Name, bundleID)
 	}
 
-	schemes, err := project.SharedSchemes()
+	schemes, err := project.Schemes()
 	if err != nil {
 		panic(err)
 	}

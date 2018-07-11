@@ -8,23 +8,25 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestOpenXcodeproj(t *testing.T) {
-	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-samples/sample-apps-ios-simple-objc.git")
-	project, err := Open(filepath.Join(dir, "ios-simple-objc/ios-simple-objc.xcodeproj"))
+func TestSchemes(t *testing.T) {
+	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-samples/xcode-project-test.git")
+	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
 	require.NoError(t, err)
-	require.Equal(t, 2, len(project.Proj.Targets))
 
-	{
-		target, ok := project.Proj.Target("BA3CBE7419F7A93800CED4D5")
-		require.True(t, ok)
-		require.Equal(t, "ios-simple-objc", target.Name)
-	}
+	schemes, err := project.Schemes()
+	require.NoError(t, err)
+	require.Equal(t, 2, len(schemes))
 
-	{
-		target, ok := project.Proj.Target("BA3CBE9019F7A93900CED4D5")
-		require.True(t, ok)
-		require.Equal(t, "ios-simple-objcTests", target.Name)
-	}
+	require.Equal(t, "ProjectScheme", schemes[0].Name)
+	require.Equal(t, "ProjectTodayExtensionScheme", schemes[1].Name)
+}
+
+func TestOpenXcodeproj(t *testing.T) {
+	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-samples/xcode-project-test.git")
+	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
+	require.NoError(t, err)
+	require.Equal(t, filepath.Join(dir, "XcodeProj.xcodeproj"), project.Path)
+	require.Equal(t, "XcodeProj", project.Name)
 }
 
 func TestIsXcodeProj(t *testing.T) {

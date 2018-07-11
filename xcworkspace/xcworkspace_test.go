@@ -8,6 +8,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestSchemes(t *testing.T) {
+	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-samples/xcode-project-test.git")
+	workspace, err := Open(filepath.Join(dir, "XcodeProj.xcworkspace"))
+	require.NoError(t, err)
+
+	schemes, err := workspace.Schemes()
+	require.NoError(t, err)
+	require.Equal(t, 1, len(schemes))
+
+	require.Equal(t, "WorkspaceScheme", schemes[0].Name)
+}
+
 func TestWorkspaceFileLocations(t *testing.T) {
 	workspaceContentsPth := testhelper.CreateTmpFile(t, "contents.xcworkspacedata", workspaceContentsContent)
 	workspacePth := filepath.Dir(workspaceContentsPth)
