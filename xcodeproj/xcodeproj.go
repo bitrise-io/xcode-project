@@ -19,6 +19,22 @@ type XcodeProj struct {
 	Path string
 }
 
+// Scheme ...
+func (p XcodeProj) Scheme(name string) (xcscheme.Scheme, bool) {
+	schemes, err := p.Schemes()
+	if err != nil {
+		return xcscheme.Scheme{}, false
+	}
+
+	for _, scheme := range schemes {
+		if scheme.Name == name {
+			return scheme, true
+		}
+	}
+
+	return xcscheme.Scheme{}, false
+}
+
 // Schemes ...
 func (p XcodeProj) Schemes() ([]xcscheme.Scheme, error) {
 	pattern := filepath.Join(p.Path, "xcshareddata", "xcschemes", "*.xcscheme")

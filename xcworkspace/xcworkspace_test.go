@@ -8,16 +8,56 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestScheme(t *testing.T) {
+	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-samples/xcode-project-test.git")
+	workspace, err := Open(filepath.Join(dir, "XcodeProj.xcworkspace"))
+	require.NoError(t, err)
+
+	{
+		scheme, container, ok := workspace.Scheme("SubProjectWatchKitApp (Notification) Scheme")
+		require.True(t, ok)
+		require.Equal(t, filepath.Join(dir, "Group/SubProject/SubProject.xcodeproj"), container)
+		require.Equal(t, "SubProjectWatchKitApp (Notification) Scheme", scheme.Name)
+	}
+
+	{
+		scheme, container, ok := workspace.Scheme("Not Exist Scheme")
+		require.False(t, ok)
+		require.Equal(t, "", container)
+		require.Equal(t, "", scheme.Name)
+	}
+}
+
 func TestSchemes(t *testing.T) {
 	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-samples/xcode-project-test.git")
 	workspace, err := Open(filepath.Join(dir, "XcodeProj.xcworkspace"))
 	require.NoError(t, err)
 
-	schemes, err := workspace.Schemes()
+	schemesByContainer, err := workspace.Schemes()
 	require.NoError(t, err)
-	require.Equal(t, 1, len(schemes))
+	require.Equal(t, 3, len(schemesByContainer))
 
-	require.Equal(t, "WorkspaceScheme", schemes[0].Name)
+	{
+		schemes := schemesByContainer[filepath.Join(dir, "XcodeProj.xcworkspace")]
+		require.Equal(t, 1, len(schemes))
+		require.Equal(t, "WorkspaceScheme", schemes[0].Name)
+	}
+
+	{
+		schemes := schemesByContainer[filepath.Join(dir, "XcodeProj.xcodeproj")]
+		require.Equal(t, 2, len(schemes))
+		require.Equal(t, "ProjectScheme", schemes[0].Name)
+		require.Equal(t, "ProjectTodayExtensionScheme", schemes[1].Name)
+	}
+
+	{
+		schemes := schemesByContainer[filepath.Join(dir, "Group/SubProject/SubProject.xcodeproj")]
+		require.Equal(t, 4, len(schemes))
+		require.Equal(t, "SubProjectScheme", schemes[0].Name)
+		require.Equal(t, "SubProjectTestScheme", schemes[1].Name)
+		require.Equal(t, "SubProjectWatchKitApp (Notification) Scheme", schemes[2].Name)
+		require.Equal(t, "SubProjectWatchKitAppScheme", schemes[3].Name)
+	}
 }
 
 func TestWorkspaceFileLocations(t *testing.T) {
