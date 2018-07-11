@@ -7,6 +7,7 @@ import (
 
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-tools/xcode-project/xcodeproj"
+	"github.com/bitrise-tools/xcode-project/xcscheme"
 )
 
 // Workspace ...
@@ -16,6 +17,26 @@ type Workspace struct {
 
 	Name string
 	Path string
+}
+
+// Schemes ...
+func (w Workspace) Schemes() ([]xcscheme.Scheme, error) {
+	pattern := filepath.Join(w.Path, "xcshareddata", "xcschemes", "*.xcscheme")
+	pths, err := filepath.Glob(pattern)
+	if err != nil {
+		return nil, err
+	}
+
+	var schemes []xcscheme.Scheme
+	for _, pth := range pths {
+		scheme, err := xcscheme.Open(pth)
+		if err != nil {
+			return nil, err
+		}
+		schemes = append(schemes, scheme)
+	}
+
+	return schemes, nil
 }
 
 // FileLocations ...

@@ -19,8 +19,8 @@ type XcodeProj struct {
 	Path string
 }
 
-// SharedSchemes ...
-func (p XcodeProj) SharedSchemes() ([]xcscheme.Scheme, error) {
+// Schemes ...
+func (p XcodeProj) Schemes() ([]xcscheme.Scheme, error) {
 	pattern := filepath.Join(p.Path, "xcshareddata", "xcschemes", "*.xcscheme")
 	pths, err := filepath.Glob(pattern)
 	if err != nil {
