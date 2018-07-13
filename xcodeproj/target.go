@@ -25,6 +25,20 @@ type Target struct {
 	Dependencies           []TargetDependency
 }
 
+// DependentTargets ...
+func (t Target) DependentTargets() []Target {
+	var targets []Target
+	for _, targetDependency := range t.Dependencies {
+		childTarget := targetDependency.Target
+		targets = append(targets, childTarget)
+
+		childDependentTargets := childTarget.DependentTargets()
+		targets = append(targets, childDependentTargets...)
+	}
+
+	return targets
+}
+
 func parseTarget(id string, objects serialized.Object) (Target, error) {
 	rawTarget, err := objects.Object(id)
 	if err != nil {
