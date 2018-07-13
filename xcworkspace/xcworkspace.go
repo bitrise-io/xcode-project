@@ -19,24 +19,67 @@ type Workspace struct {
 	Path string
 }
 
+// Scheme ...
+func (w Workspace) Scheme(name string) (xcscheme.Scheme, string, bool) {
+	schemesByContainer, err := w.Schemes()
+	if err != nil {
+		return xcscheme.Scheme{}, "", false
+	}
+
+	for container, schemes := range schemesByContainer {
+		for _, scheme := range schemes {
+			if scheme.Name == name {
+				return scheme, container, true
+			}
+		}
+	}
+
+	return xcscheme.Scheme{}, "", false
+}
+
 // Schemes ...
-func (w Workspace) Schemes() ([]xcscheme.Scheme, error) {
+func (w Workspace) Schemes() (map[string][]xcscheme.Scheme, error) {
+	schemesByContainer := map[string][]xcscheme.Scheme{}
+
 	pattern := filepath.Join(w.Path, "xcshareddata", "xcschemes", "*.xcscheme")
 	pths, err := filepath.Glob(pattern)
 	if err != nil {
 		return nil, err
 	}
 
-	var schemes []xcscheme.Scheme
+	// workspace schemes
+	var workspaceSchemes []xcscheme.Scheme
 	for _, pth := range pths {
 		scheme, err := xcscheme.Open(pth)
 		if err != nil {
 			return nil, err
 		}
-		schemes = append(schemes, scheme)
+		workspaceSchemes = append(workspaceSchemes, scheme)
 	}
 
-	return schemes, nil
+	schemesByContainer[w.Path] = workspaceSchemes
+
+	// project schemes
+	projectLocations, err := w.ProjectFileLocations()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, projectLocation := range projectLocations {
+		project, err := xcodeproj.Open(projectLocation)
+		if err != nil {
+			return nil, err
+		}
+
+		projectSchemes, err := project.Schemes()
+		if err != nil {
+			return nil, err
+		}
+
+		schemesByContainer[project.Path] = projectSchemes
+	}
+
+	return schemesByContainer, nil
 }
 
 // FileLocations ...

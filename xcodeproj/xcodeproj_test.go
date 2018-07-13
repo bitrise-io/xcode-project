@@ -8,6 +8,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestScheme(t *testing.T) {
+	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-samples/xcode-project-test.git")
+	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
+	require.NoError(t, err)
+
+	{
+		scheme, ok := project.Scheme("ProjectTodayExtensionScheme")
+		require.True(t, ok)
+		require.Equal(t, "ProjectTodayExtensionScheme", scheme.Name)
+	}
+
+	{
+		scheme, ok := project.Scheme("NotExistScheme")
+		require.False(t, ok)
+		require.Equal(t, "", scheme.Name)
+	}
+}
+
 func TestSchemes(t *testing.T) {
 	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-samples/xcode-project-test.git")
 	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
