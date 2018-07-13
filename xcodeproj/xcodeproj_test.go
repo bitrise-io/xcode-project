@@ -8,6 +8,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestTargets(t *testing.T) {
+	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-samples/xcode-project-test.git")
+	project, err := Open(filepath.Join(dir, "Group/SubProject/SubProject.xcodeproj"))
+	require.NoError(t, err)
+
+	target, ok := project.Proj.Target("7D0342D720F4B5AD0050B6A6")
+	require.True(t, ok)
+
+	dependentTargets := target.DependentTargets()
+	require.Equal(t, 2, len(dependentTargets))
+	require.Equal(t, "WatchKitApp", dependentTargets[0].Name)
+	require.Equal(t, "WatchKitApp Extension", dependentTargets[1].Name)
+}
+
 func TestScheme(t *testing.T) {
 	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-samples/xcode-project-test.git")
 	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
