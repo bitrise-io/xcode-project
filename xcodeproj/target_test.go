@@ -1,6 +1,7 @@
 package xcodeproj
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/bitrise-tools/xcode-project/pretty"
@@ -8,6 +9,42 @@ import (
 	"github.com/stretchr/testify/require"
 	"howett.net/plist"
 )
+
+func TestBundleID(t *testing.T) {
+	{
+		var raw serialized.Object
+		_, err := plist.Unmarshal([]byte(rawNativeTarget), &raw)
+		require.NoError(t, err)
+
+		target, err := parseTarget("13E76E0D1F4AC90A0028096E", raw)
+		require.NoError(t, err)
+
+		bundleID, err := target.BundleID("Debug", "")
+		require.NoError(t, err)
+		require.Equal(t, "com.bitrise.code-sign-test", bundleID)
+	}
+
+	{
+		var raw serialized.Object
+		_, err := plist.Unmarshal([]byte(rawAggregateTarget), &raw)
+		require.NoError(t, err)
+
+		target, err := parseTarget("FD55DAD914CE0B0000F84D24", raw)
+		require.NoError(t, err)
+
+		bundleID, err := target.BundleID("Release", "")
+		require.EqualError(t, err, "no PRODUCT_BUNDLE_IDENTIFIER build settings defined and failed to resolve bundle id (Bitrise.$(TARGET_NAME).watch): build settings not found with key: TARGET_NAME")
+		require.Equal(t, "", bundleID)
+	}
+}
+
+func TestResolveBundleID(t *testing.T) {
+	buildSettings := serialized.Object(map[string]interface{}{"PRODUCT_NAME": "sample-app"})
+
+	bundleID, err := resolveBundleID("Bitrise.$(PRODUCT_NAME:rfc1034identifier).watch", buildSettings)
+	require.NoError(t, err)
+	require.Equal(t, "Bitrise.sample-app.watch", bundleID)
+}
 
 func TestParseTarget(t *testing.T) {
 	t.Log("PBXNativeTarget")
@@ -30,7 +67,7 @@ func TestParseTarget(t *testing.T) {
 
 		target, err := parseTarget("FD55DAD914CE0B0000F84D24", raw)
 		require.NoError(t, err)
-		// fmt.Printf("target:\n%s\n", pretty.Object(target))
+		fmt.Printf("target:\n%s\n", pretty.Object(target))
 		require.Equal(t, expectedAggregateTarget, pretty.Object(target))
 	}
 
@@ -128,6 +165,7 @@ const rawAggregateTarget = `{
 		buildSettings = {
 			INSTALLHDRS_SCRIPT_PHASE = YES;
 			PRODUCT_NAME = "$(TARGET_NAME)";
+			PRODUCT_BUNDLE_IDENTIFIER = "Bitrise.$(PRODUCT_NAME:rfc1034identifier).watch";
 		};
 		name = Release;
 	};
@@ -146,6 +184,7 @@ const expectedAggregateTarget = `{
 				"Name": "Release",
 				"BuildSettings": {
 					"INSTALLHDRS_SCRIPT_PHASE": "YES",
+					"PRODUCT_BUNDLE_IDENTIFIER": "Bitrise.$(PRODUCT_NAME:rfc1034identifier).watch",
 					"PRODUCT_NAME": "$(TARGET_NAME)"
 				}
 			}
