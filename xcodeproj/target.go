@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
-	"regexp"
-	"strings"
 
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-tools/xcode-project/serialized"
@@ -31,94 +29,82 @@ type Target struct {
 	Dependencies           []TargetDependency
 }
 
-// BundleID ...
-func (t Target) BundleID(configuration, containerDir string) (string, error) {
-	var buildConfiguration BuildConfiguration
-	for i := range t.BuildConfigurationList.BuildConfigurations {
-		if t.BuildConfigurationList.BuildConfigurations[i].Name == configuration {
-			buildConfiguration = t.BuildConfigurationList.BuildConfigurations[i]
-			break
+// BuildSettings ...
+func (t Target) BuildSettings(configuration string) (serialized.Object, error) {
+	for _, buildConfigurationList := range t.BuildConfigurationList.BuildConfigurations {
+		if buildConfigurationList.Name == configuration {
+			return buildConfigurationList.BuildSettings, nil
 		}
 	}
-	if buildConfiguration.Name == "" {
-		return "", fmt.Errorf("configuration: %s not found", configuration)
+	return nil, NewConfigurationNotFoundError(configuration)
+}
+
+// InformationPropertyListPath ...
+func (t Target) InformationPropertyListPath(configuration string, containerDir string) (string, error) {
+	buildSettings, err := t.BuildSettings(configuration)
+	if err != nil {
+		return "", err
 	}
 
-	bundleID, err := buildConfiguration.BuildSettings.String("PRODUCT_BUNDLE_IDENTIFIER")
+	relPth, err := buildSettings.String("INFOPLIST_FILE")
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(containerDir, relPth), nil
+}
+
+// InformationPropertyList ...
+func (t Target) InformationPropertyList(configuration string, containerDir string) (serialized.Object, error) {
+	informationPropertyListPth, err := t.InformationPropertyListPath(configuration, containerDir)
+	if err != nil {
+		return nil, err
+	}
+
+	informationPropertyListContent, err := fileutil.ReadBytesFromFile(informationPropertyListPth)
+	if err != nil {
+		return nil, err
+	}
+
+	var informationPropertyList serialized.Object
+	if _, err := plist.Unmarshal([]byte(informationPropertyListContent), &informationPropertyList); err != nil {
+		return nil, err
+	}
+
+	return informationPropertyList, nil
+}
+
+// BundleID ...
+func (t Target) BundleID(configuration, containerDir string) (BundleID, error) {
+	buildSettings, err := t.BuildSettings(configuration)
+	if err != nil {
+		return "", err
+	}
+
+	bundleID, err := buildSettings.String("PRODUCT_BUNDLE_IDENTIFIER")
 	if err != nil && !serialized.IsKeyNotFoundError(err) {
 		return "", err
 	}
 
-	if bundleID == "" {
-		infoPlistRelPth, err := buildConfiguration.BuildSettings.String("INFOPLIST_FILE")
-		if err != nil {
-			return "", fmt.Errorf("no PRODUCT_BUNDLE_IDENTIFIER build settings defined and failed to read target INFOPLIST_FILE: %s", err)
-		}
-
-		infoPlistPth := filepath.Join(containerDir, infoPlistRelPth)
-		infoPlistContent, err := fileutil.ReadBytesFromFile(infoPlistPth)
-		if err != nil {
-			return "", fmt.Errorf("no PRODUCT_BUNDLE_IDENTIFIER build settings defined and failed to read the Info.plist file: %s", err)
-		}
-
-		var infoPlistObject serialized.Object
-		if _, err := plist.Unmarshal([]byte(infoPlistContent), &infoPlistObject); err != nil {
-			return "", fmt.Errorf("no PRODUCT_BUNDLE_IDENTIFIER build settings defined and failed to unmarshal the Info.plist file: %s", err)
-		}
-
-		bundleID, err = infoPlistObject.String("CFBundleIdentifier")
-		if err != nil {
-			return "", fmt.Errorf("no PRODUCT_BUNDLE_IDENTIFIER build settings defined and failed to read CFBundleIdentifier from the Info.plist file: %s", err)
-		}
+	if bundleID != "" {
+		return BundleID(bundleID), nil
 	}
 
-	if bundleID == "" {
-		return "", errors.New("no PRODUCT_BUNDLE_IDENTIFIER build settings nor CFBundleIdentifier manifest defined")
-	}
-
-	for strings.Contains(bundleID, "$") {
-		resolvedBundleID, err := resolveBundleID(bundleID, buildConfiguration.BuildSettings)
-		if err != nil {
-			return "", fmt.Errorf("no PRODUCT_BUNDLE_IDENTIFIER build settings defined and %s", err)
-		}
-
-		if resolvedBundleID == bundleID {
-			return "", fmt.Errorf("no PRODUCT_BUNDLE_IDENTIFIER build settings defined and failed to resolve CFBundleIdentifier (%s)", bundleID)
-		}
-
-		bundleID = resolvedBundleID
-	}
-
-	if strings.Contains(bundleID, "$") {
-		resolvedBundleID, err := resolveBundleID(bundleID, buildConfiguration.BuildSettings)
-		if err != nil {
-			return "", fmt.Errorf("no PRODUCT_BUNDLE_IDENTIFIER build settings defined and failed to resolve CFBundleIdentifier (%s): %s", bundleID, err)
-		}
-		bundleID = resolvedBundleID
-	}
-
-	return bundleID, nil
-}
-
-func resolveBundleID(bundleID string, buildSettings serialized.Object) (string, error) {
-	re := regexp.MustCompile(`(.*)\$\((.*)\)(.*)`)
-	matches := re.FindStringSubmatch(bundleID)
-	if len(matches) != 4 {
-		return "", fmt.Errorf(`failed to resolve bundle id (%s): does not conforms to: (.*)$\(.*\)(.*)`, bundleID)
-	}
-
-	prefix := matches[1]
-	suffix := matches[3]
-	envKey := matches[2]
-
-	split := strings.Split(envKey, ":")
-	envKey = split[0]
-	envValue, err := buildSettings.String(envKey)
+	informationPropertyList, err := t.InformationPropertyList(configuration, containerDir)
 	if err != nil {
-		return "", fmt.Errorf("failed to resolve bundle id (%s): build settings not found with key: %s", bundleID, envKey)
+		return "", err
 	}
 
-	return prefix + envValue + suffix, nil
+	bundleID, err = informationPropertyList.String("CFBundleIdentifier")
+	if err != nil {
+		return "", err
+	}
+
+	if bundleID == "" {
+		return "", errors.New("no PRODUCT_BUNDLE_IDENTIFIER build settings nor CFBundleIdentifier information property found")
+	}
+
+	return BundleID(bundleID), nil
 }
 
 // DependentTargets ...

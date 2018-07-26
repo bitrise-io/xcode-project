@@ -1,7 +1,6 @@
 package xcodeproj
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/bitrise-tools/xcode-project/pretty"
@@ -9,6 +8,59 @@ import (
 	"github.com/stretchr/testify/require"
 	"howett.net/plist"
 )
+
+func TestBuildSettings(t *testing.T) {
+	{
+		var raw serialized.Object
+		_, err := plist.Unmarshal([]byte(rawNativeTarget), &raw)
+		require.NoError(t, err)
+
+		target, err := parseTarget("13E76E0D1F4AC90A0028096E", raw)
+		require.NoError(t, err)
+
+		settings, err := target.BuildSettings("Debug")
+		require.NoError(t, err)
+		require.Equal(t, serialized.Object(map[string]interface{}{
+			"ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
+			"CODE_SIGN_IDENTITY[sdk=iphoneos*]":  "iPhone Developer",
+			"CODE_SIGN_STYLE":                    "Automatic",
+			"DEVELOPMENT_TEAM":                   "72SA8V3WYL",
+			"INFOPLIST_FILE":                     "code-sign-test/Info.plist",
+			"LD_RUNPATH_SEARCH_PATHS":            "$(inherited) @executable_path/Frameworks",
+			"PRODUCT_BUNDLE_IDENTIFIER":          "com.bitrise.code-sign-test",
+			"PRODUCT_NAME":                       "$(TARGET_NAME)",
+			"PROVISIONING_PROFILE":               "",
+			"PROVISIONING_PROFILE_SPECIFIER":     "",
+			"TARGETED_DEVICE_FAMILY":             "1,2",
+		}), settings)
+	}
+
+	{
+		var raw serialized.Object
+		_, err := plist.Unmarshal([]byte(rawNativeTarget), &raw)
+		require.NoError(t, err)
+
+		target, err := parseTarget("13E76E0D1F4AC90A0028096E", raw)
+		require.NoError(t, err)
+
+		settings, err := target.BuildSettings("NotExist")
+		require.EqualError(t, err, "configuration not found with name: NotExist")
+		require.Equal(t, serialized.Object(nil), settings)
+	}
+}
+
+func TestInformationPropertyListPath(t *testing.T) {
+	var raw serialized.Object
+	_, err := plist.Unmarshal([]byte(rawNativeTarget), &raw)
+	require.NoError(t, err)
+
+	target, err := parseTarget("13E76E0D1F4AC90A0028096E", raw)
+	require.NoError(t, err)
+
+	pth, err := target.InformationPropertyListPath("Debug", "/container_dir")
+	require.NoError(t, err)
+	require.Equal(t, "/container_dir/code-sign-test/Info.plist", pth)
+}
 
 func TestBundleID(t *testing.T) {
 	{
@@ -21,7 +73,7 @@ func TestBundleID(t *testing.T) {
 
 		bundleID, err := target.BundleID("Debug", "")
 		require.NoError(t, err)
-		require.Equal(t, "com.bitrise.code-sign-test", bundleID)
+		require.Equal(t, BundleID("com.bitrise.code-sign-test"), bundleID)
 	}
 
 	{
@@ -33,17 +85,9 @@ func TestBundleID(t *testing.T) {
 		require.NoError(t, err)
 
 		bundleID, err := target.BundleID("Release", "")
-		require.EqualError(t, err, "no PRODUCT_BUNDLE_IDENTIFIER build settings defined and failed to resolve bundle id (Bitrise.$(TARGET_NAME).watch): build settings not found with key: TARGET_NAME")
-		require.Equal(t, "", bundleID)
+		require.NoError(t, err)
+		require.Equal(t, BundleID("Bitrise.$(PRODUCT_NAME:rfc1034identifier).watch"), bundleID)
 	}
-}
-
-func TestResolveBundleID(t *testing.T) {
-	buildSettings := serialized.Object(map[string]interface{}{"PRODUCT_NAME": "sample-app"})
-
-	bundleID, err := resolveBundleID("Bitrise.$(PRODUCT_NAME:rfc1034identifier).watch", buildSettings)
-	require.NoError(t, err)
-	require.Equal(t, "Bitrise.sample-app.watch", bundleID)
 }
 
 func TestParseTarget(t *testing.T) {
@@ -67,7 +111,7 @@ func TestParseTarget(t *testing.T) {
 
 		target, err := parseTarget("FD55DAD914CE0B0000F84D24", raw)
 		require.NoError(t, err)
-		fmt.Printf("target:\n%s\n", pretty.Object(target))
+		// fmt.Printf("target:\n%s\n", pretty.Object(target))
 		require.Equal(t, expectedAggregateTarget, pretty.Object(target))
 	}
 
