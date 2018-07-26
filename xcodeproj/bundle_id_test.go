@@ -17,7 +17,7 @@ func TestResolve(t *testing.T) {
 
 	{
 		bundleID := BundleID("Bitrise.$(PRODUCT_NAME:rfc1034identifier).watch")
-		buildSettings := serialized.Object(map[string]interface{}{"PRODUCT_NAME": "XcodeProjectSample"})
+		buildSettings := serialized.Object{"PRODUCT_NAME": "XcodeProjectSample"}
 		resolved, err := bundleID.Resolve(buildSettings)
 		require.NoError(t, err)
 		require.Equal(t, "Bitrise.XcodeProjectSample.watch", resolved)
@@ -25,7 +25,7 @@ func TestResolve(t *testing.T) {
 
 	{
 		bundleID := BundleID("Bitrise.$PRODUCT_NAME.watch")
-		buildSettings := serialized.Object(map[string]interface{}{"PRODUCT_NAME": "XcodeProjectSample"})
+		buildSettings := serialized.Object{"PRODUCT_NAME": "XcodeProjectSample"}
 		resolved, err := bundleID.Resolve(buildSettings)
 		require.NoError(t, err)
 		require.Equal(t, "Bitrise.XcodeProjectSample.watch", resolved)
@@ -33,7 +33,7 @@ func TestResolve(t *testing.T) {
 
 	{
 		bundleID := BundleID("Bitrise.$PRODUCT_NAME.watch")
-		buildSettings := serialized.Object(map[string]interface{}{"PRODUCT_NAME": "$TARGET_NAME", "TARGET_NAME": "XcodeProjectSample"})
+		buildSettings := serialized.Object{"PRODUCT_NAME": "$TARGET_NAME", "TARGET_NAME": "XcodeProjectSample"}
 		resolved, err := bundleID.Resolve(buildSettings)
 		require.NoError(t, err)
 		require.Equal(t, "Bitrise.XcodeProjectSample.watch", resolved)
@@ -41,7 +41,7 @@ func TestResolve(t *testing.T) {
 
 	{
 		bundleID := BundleID("Bitrise.$PRODUCT_NAME.watch")
-		buildSettings := serialized.Object(map[string]interface{}{"PRODUCT_NAME": "$TARGET_NAME", "TARGET_NAME": "$PRODUCT_NAME"})
+		buildSettings := serialized.Object{"PRODUCT_NAME": "$TARGET_NAME", "TARGET_NAME": "$PRODUCT_NAME"}
 		resolved, err := bundleID.Resolve(buildSettings)
 		require.EqualError(t, err, "failed to resolve bundle id (Bitrise.$PRODUCT_NAME.watch): reference cycle found")
 		require.Equal(t, "", resolved)

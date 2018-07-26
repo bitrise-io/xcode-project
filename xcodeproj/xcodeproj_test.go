@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/bitrise-tools/xcode-project/serialized"
 	"github.com/bitrise-tools/xcode-project/testhelper"
 	"github.com/stretchr/testify/require"
 )
@@ -20,6 +21,24 @@ func TestTargets(t *testing.T) {
 	require.Equal(t, 2, len(dependentTargets))
 	require.Equal(t, "WatchKitApp", dependentTargets[0].Name)
 	require.Equal(t, "WatchKitApp Extension", dependentTargets[1].Name)
+
+	properties, err := target.InformationPropertyList("Debug", filepath.Dir(project.Path))
+	require.NoError(t, err)
+	require.Equal(t, serialized.Object{
+		"UISupportedInterfaceOrientations":      []interface{}{"UIInterfaceOrientationPortrait", "UIInterfaceOrientationLandscapeLeft", "UIInterfaceOrientationLandscapeRight"},
+		"CFBundleExecutable":                    "$(EXECUTABLE_NAME)",
+		"CFBundleInfoDictionaryVersion":         "6.0",
+		"CFBundleVersion":                       "1",
+		"UIRequiredDeviceCapabilities":          []interface{}{"armv7"},
+		"UISupportedInterfaceOrientations~ipad": []interface{}{"UIInterfaceOrientationPortrait", "UIInterfaceOrientationPortraitUpsideDown", "UIInterfaceOrientationLandscapeLeft", "UIInterfaceOrientationLandscapeRight"},
+		"CFBundleIdentifier":                    "$(PRODUCT_BUNDLE_IDENTIFIER)",
+		"CFBundlePackageType":                   "APPL",
+		"LSRequiresIPhoneOS":                    true,
+		"CFBundleName":                          "$(PRODUCT_NAME)",
+		"CFBundleShortVersionString":            "1.0",
+		"CFBundleDevelopmentRegion":             "$(DEVELOPMENT_LANGUAGE)",
+		"UILaunchStoryboardName":                "LaunchScreen",
+		"UIMainStoryboardFile":                  "Main"}, properties)
 }
 
 func TestScheme(t *testing.T) {

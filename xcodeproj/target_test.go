@@ -20,7 +20,7 @@ func TestBuildSettings(t *testing.T) {
 
 		settings, err := target.BuildSettings("Debug")
 		require.NoError(t, err)
-		require.Equal(t, serialized.Object(map[string]interface{}{
+		require.Equal(t, serialized.Object{
 			"ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
 			"CODE_SIGN_IDENTITY[sdk=iphoneos*]":  "iPhone Developer",
 			"CODE_SIGN_STYLE":                    "Automatic",
@@ -32,7 +32,7 @@ func TestBuildSettings(t *testing.T) {
 			"PROVISIONING_PROFILE":               "",
 			"PROVISIONING_PROFILE_SPECIFIER":     "",
 			"TARGETED_DEVICE_FAMILY":             "1,2",
-		}), settings)
+		}, settings)
 	}
 
 	{
