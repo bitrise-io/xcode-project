@@ -1,6 +1,7 @@
 package xcodeproj
 
 import (
+	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -14,38 +15,54 @@ func TestTargets(t *testing.T) {
 	project, err := Open(filepath.Join(dir, "Group/SubProject/SubProject.xcodeproj"))
 	require.NoError(t, err)
 
-	target, ok := project.Proj.Target("7D0342D720F4B5AD0050B6A6")
-	require.True(t, ok)
-
-	dependentTargets := target.DependentTargets()
-	require.Equal(t, 2, len(dependentTargets))
-	require.Equal(t, "WatchKitApp", dependentTargets[0].Name)
-	require.Equal(t, "WatchKitApp Extension", dependentTargets[1].Name)
-
 	{
-		properties, err := target.InformationPropertyList("Debug", filepath.Dir(project.Path))
-		require.NoError(t, err)
-		require.Equal(t, serialized.Object{
-			"UISupportedInterfaceOrientations":      []interface{}{"UIInterfaceOrientationPortrait", "UIInterfaceOrientationLandscapeLeft", "UIInterfaceOrientationLandscapeRight"},
-			"CFBundleExecutable":                    "$(EXECUTABLE_NAME)",
-			"CFBundleInfoDictionaryVersion":         "6.0",
-			"CFBundleVersion":                       "1",
-			"UIRequiredDeviceCapabilities":          []interface{}{"armv7"},
-			"UISupportedInterfaceOrientations~ipad": []interface{}{"UIInterfaceOrientationPortrait", "UIInterfaceOrientationPortraitUpsideDown", "UIInterfaceOrientationLandscapeLeft", "UIInterfaceOrientationLandscapeRight"},
-			"CFBundleIdentifier":                    "$(PRODUCT_BUNDLE_IDENTIFIER)",
-			"CFBundlePackageType":                   "APPL",
-			"LSRequiresIPhoneOS":                    true,
-			"CFBundleName":                          "$(PRODUCT_NAME)",
-			"CFBundleShortVersionString":            "1.0",
-			"CFBundleDevelopmentRegion":             "$(DEVELOPMENT_LANGUAGE)",
-			"UILaunchStoryboardName":                "LaunchScreen",
-			"UIMainStoryboardFile":                  "Main"}, properties)
+		target, ok := project.Proj.Target("7D0342D720F4B5AD0050B6A6")
+		require.True(t, ok)
+
+		dependentTargets := target.DependentTargets()
+		require.Equal(t, 2, len(dependentTargets))
+		require.Equal(t, "WatchKitApp", dependentTargets[0].Name)
+		require.Equal(t, "WatchKitApp Extension", dependentTargets[1].Name)
 	}
 
 	{
-		properties, err := target.InformationPropertyList("NotExist", filepath.Dir(project.Path))
-		require.EqualError(t, err, "configuration not found with name: NotExist")
-		require.Equal(t, serialized.Object(nil), properties)
+		settings, err := project.TargetBuildSettings("SubProject", "Debug")
+		require.NoError(t, err)
+		require.True(t, len(settings) > 0)
+		fmt.Printf("%s\n", settings)
+
+		bundleID, err := settings.String("PRODUCT_BUNDLE_IDENTIFIER")
+		require.NoError(t, err)
+		require.Equal(t, "com.bitrise.SubProject", bundleID)
+
+		infoPlist, err := settings.String("INFOPLIST_PATH")
+		require.NoError(t, err)
+		require.Equal(t, "SubProject.app/Info.plist", infoPlist)
+	}
+
+	{
+		bundleID, err := project.TargetBundleID("SubProject", "Debug")
+		require.NoError(t, err)
+		require.Equal(t, "com.bitrise.SubProject", bundleID)
+	}
+
+	{
+		properties, err := project.TargetInformationPropertyList("SubProject", "Debug")
+		require.NoError(t, err)
+		require.Equal(t, serialized.Object{"CFBundlePackageType": "APPL",
+			"UISupportedInterfaceOrientations":      []interface{}{"UIInterfaceOrientationPortrait", "UIInterfaceOrientationLandscapeLeft", "UIInterfaceOrientationLandscapeRight"},
+			"CFBundleInfoDictionaryVersion":         "6.0",
+			"CFBundleName":                          "$(PRODUCT_NAME)",
+			"UISupportedInterfaceOrientations~ipad": []interface{}{"UIInterfaceOrientationPortrait", "UIInterfaceOrientationPortraitUpsideDown", "UIInterfaceOrientationLandscapeLeft", "UIInterfaceOrientationLandscapeRight"},
+			"CFBundleDevelopmentRegion":             "$(DEVELOPMENT_LANGUAGE)",
+			"CFBundleExecutable":                    "$(EXECUTABLE_NAME)",
+			"CFBundleShortVersionString":            "1.0",
+			"CFBundleVersion":                       "1",
+			"LSRequiresIPhoneOS":                    true,
+			"UIMainStoryboardFile":                  "Main",
+			"UIRequiredDeviceCapabilities":          []interface{}{"armv7"},
+			"CFBundleIdentifier":                    "$(PRODUCT_BUNDLE_IDENTIFIER)",
+			"UILaunchStoryboardName":                "LaunchScreen"}, properties)
 	}
 }
 
