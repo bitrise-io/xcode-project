@@ -20,6 +20,41 @@ type XcodeProj struct {
 	Path string
 }
 
+// TargetCodeSignEntitlementsPath ...
+func (p XcodeProj) TargetCodeSignEntitlementsPath(target, configuration string) (string, error) {
+	buildSettings, err := p.TargetBuildSettings(target, configuration, "")
+	if err != nil {
+		return "", err
+	}
+
+	relPth, err := buildSettings.String("CODE_SIGN_ENTITLEMENTS")
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(filepath.Dir(p.Path), relPth), nil
+}
+
+// TargetCodeSignEntitlements ...
+func (p XcodeProj) TargetCodeSignEntitlements(target, configuration string) (serialized.Object, error) {
+	codeSignEntitlementsPth, err := p.TargetCodeSignEntitlementsPath(target, configuration)
+	if err != nil {
+		return nil, err
+	}
+
+	codeSignEntitlementsContent, err := fileutil.ReadBytesFromFile(codeSignEntitlementsPth)
+	if err != nil {
+		return nil, err
+	}
+
+	var codeSignEntitlements serialized.Object
+	if _, err := plist.Unmarshal([]byte(codeSignEntitlementsContent), &codeSignEntitlements); err != nil {
+		return nil, err
+	}
+
+	return codeSignEntitlements, nil
+}
+
 // TargetInformationPropertyListPath ...
 func (p XcodeProj) TargetInformationPropertyListPath(target, configuration string) (string, error) {
 	buildSettings, err := p.TargetBuildSettings(target, configuration, "")

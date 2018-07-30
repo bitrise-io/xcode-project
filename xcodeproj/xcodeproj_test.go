@@ -1,7 +1,6 @@
 package xcodeproj
 
 import (
-	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -29,7 +28,6 @@ func TestTargets(t *testing.T) {
 		settings, err := project.TargetBuildSettings("SubProject", "Debug", "")
 		require.NoError(t, err)
 		require.True(t, len(settings) > 0)
-		fmt.Printf("%s\n", settings)
 
 		bundleID, err := settings.String("PRODUCT_BUNDLE_IDENTIFIER")
 		require.NoError(t, err)
@@ -63,6 +61,13 @@ func TestTargets(t *testing.T) {
 			"UIRequiredDeviceCapabilities":          []interface{}{"armv7"},
 			"CFBundleIdentifier":                    "$(PRODUCT_BUNDLE_IDENTIFIER)",
 			"UILaunchStoryboardName":                "LaunchScreen"}, properties)
+	}
+
+	{
+		entitlements, err := project.TargetCodeSignEntitlements("WatchKitApp", "Debug")
+		require.NoError(t, err)
+		require.Equal(t, serialized.Object{"com.apple.security.application-groups": []interface{}{}}, entitlements)
+
 	}
 }
 
