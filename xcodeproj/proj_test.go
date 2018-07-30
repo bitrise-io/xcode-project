@@ -14,10 +14,19 @@ func TestParseProj(t *testing.T) {
 	_, err := plist.Unmarshal([]byte(rawProj), &raw)
 	require.NoError(t, err)
 
-	proj, err := parseProj("13E76E061F4AC90A0028096E", raw)
-	require.NoError(t, err)
-	// fmt.Printf("proj:\n%s\n", pretty.Object(proj))
-	require.Equal(t, expectedProj, pretty.Object(proj))
+	{
+		proj, err := parseProj("13E76E061F4AC90A0028096E", raw)
+		require.NoError(t, err)
+		// fmt.Printf("proj:\n%s\n", pretty.Object(proj))
+		require.Equal(t, expectedProj, pretty.Object(proj))
+	}
+
+	{
+		proj, err := parseProj("INVALID_TARGET_ID", raw)
+		require.Error(t, err)
+		// fmt.Printf("proj:\n%s\n", pretty.Object(proj))
+		require.Equal(t, Proj{}, proj)
+	}
 }
 
 const rawProj = `

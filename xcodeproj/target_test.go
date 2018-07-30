@@ -45,6 +45,17 @@ func TestParseTarget(t *testing.T) {
 		// fmt.Printf("target:\n%s\n", pretty.Object(target))
 		require.Equal(t, expectedLegacyTarget, pretty.Object(target))
 	}
+
+	t.Log("Invalid Target ID")
+	{
+		var raw serialized.Object
+		_, err := plist.Unmarshal([]byte(rawLegacyTarget), &raw)
+		require.NoError(t, err)
+
+		target, err := parseTarget("INVALID_TARGET_ID", raw)
+		require.Error(t, err)
+		require.Equal(t, Target{}, target)
+	}
 }
 
 const rawLegacyTarget = `{
