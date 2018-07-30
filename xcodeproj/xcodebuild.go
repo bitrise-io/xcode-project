@@ -20,7 +20,7 @@ func parseShowBuildSettingsOutput(out string) (serialized.Object, error) {
 		split := strings.Split(line, " = ")
 
 		if len(split) < 2 {
-			return nil, fmt.Errorf("unkown build settings: %s", line)
+			return nil, fmt.Errorf("unknown build settings: %s", line)
 		}
 
 		key := strings.TrimSpace(split[0])
@@ -32,8 +32,13 @@ func parseShowBuildSettingsOutput(out string) (serialized.Object, error) {
 	return settings, nil
 }
 
-func showBuildSettings(project, target, configuration string) (serialized.Object, error) {
-	cmd := command.New("xcodebuild", "-project", project, "-target", target, "-configuration", configuration, "-showBuildSettings")
+func showBuildSettings(project, target, configuration, sdk string) (serialized.Object, error) {
+	args := []string{"-project", project, "-target", target, "-configuration", configuration}
+	if sdk != "" {
+		args = append(args, "-sdk", sdk)
+	}
+	args = append(args, "-showBuildSettings")
+	cmd := command.New("xcodebuild", args...)
 	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("%s failed: %s", cmd.PrintableCommandArgs(), err)

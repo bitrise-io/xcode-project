@@ -22,7 +22,7 @@ type XcodeProj struct {
 
 // TargetInformationPropertyListPath ...
 func (p XcodeProj) TargetInformationPropertyListPath(target, configuration string) (string, error) {
-	buildSettings, err := p.TargetBuildSettings(target, configuration)
+	buildSettings, err := p.TargetBuildSettings(target, configuration, "")
 	if err != nil {
 		return "", err
 	}
@@ -57,7 +57,7 @@ func (p XcodeProj) TargetInformationPropertyList(target, configuration string) (
 
 // TargetBundleID ...
 func (p XcodeProj) TargetBundleID(target, configuration string) (string, error) {
-	buildSettings, err := p.TargetBuildSettings(target, configuration)
+	buildSettings, err := p.TargetBuildSettings(target, configuration, "")
 	if err != nil {
 		return "", err
 	}
@@ -89,8 +89,8 @@ func (p XcodeProj) TargetBundleID(target, configuration string) (string, error) 
 }
 
 // TargetBuildSettings ...
-func (p XcodeProj) TargetBuildSettings(target, configuration string) (serialized.Object, error) {
-	return showBuildSettings(p.Path, target, configuration)
+func (p XcodeProj) TargetBuildSettings(target, configuration, sdk string) (serialized.Object, error) {
+	return showBuildSettings(p.Path, target, configuration, sdk)
 }
 
 // Scheme ...
