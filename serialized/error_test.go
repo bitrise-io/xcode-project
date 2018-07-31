@@ -7,7 +7,7 @@ import (
 )
 
 func TestKeyNotFoundError(t *testing.T) {
-	err := NewKeyNotFoundError("key1", Object(map[string]interface{}{"key": "value"}))
+	err := NewKeyNotFoundError("key1", Object{"key": "value"})
 	require.Equal(t, `key: string("key1") not found in: serialized.Object(serialized.Object{"key":"value"})`, err.Error())
 
 	require.True(t, IsKeyNotFoundError(err))

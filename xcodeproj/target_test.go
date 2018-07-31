@@ -45,6 +45,17 @@ func TestParseTarget(t *testing.T) {
 		// fmt.Printf("target:\n%s\n", pretty.Object(target))
 		require.Equal(t, expectedLegacyTarget, pretty.Object(target))
 	}
+
+	t.Log("Invalid Target ID")
+	{
+		var raw serialized.Object
+		_, err := plist.Unmarshal([]byte(rawLegacyTarget), &raw)
+		require.NoError(t, err)
+
+		target, err := parseTarget("INVALID_TARGET_ID", raw)
+		require.Error(t, err)
+		require.Equal(t, Target{}, target)
+	}
 }
 
 const rawLegacyTarget = `{
@@ -128,6 +139,7 @@ const rawAggregateTarget = `{
 		buildSettings = {
 			INSTALLHDRS_SCRIPT_PHASE = YES;
 			PRODUCT_NAME = "$(TARGET_NAME)";
+			PRODUCT_BUNDLE_IDENTIFIER = "Bitrise.$(PRODUCT_NAME:rfc1034identifier).watch";
 		};
 		name = Release;
 	};
@@ -146,6 +158,7 @@ const expectedAggregateTarget = `{
 				"Name": "Release",
 				"BuildSettings": {
 					"INSTALLHDRS_SCRIPT_PHASE": "YES",
+					"PRODUCT_BUNDLE_IDENTIFIER": "Bitrise.$(PRODUCT_NAME:rfc1034identifier).watch",
 					"PRODUCT_NAME": "$(TARGET_NAME)"
 				}
 			}

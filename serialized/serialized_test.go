@@ -6,6 +6,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestKeys(t *testing.T) {
+	o := Object(map[string]interface{}{"key": "value", "key1": "value", "key2": "value"})
+	keys := o.Keys()
+	require.Equal(t, 3, len(keys))
+	require.Contains(t, keys, "key")
+	require.Contains(t, keys, "key1")
+	require.Contains(t, keys, "key2")
+}
+
 func TestValue(t *testing.T) {
 	o := Object(map[string]interface{}{"key": "value"})
 

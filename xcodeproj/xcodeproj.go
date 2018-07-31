@@ -1,9 +1,12 @@
 package xcodeproj
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
+
+	"github.com/bitrise-io/go-utils/pathutil"
 
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-tools/xcode-project/serialized"
@@ -17,6 +20,114 @@ type XcodeProj struct {
 
 	Name string
 	Path string
+}
+
+// TargetCodeSignEntitlementsPath ...
+func (p XcodeProj) TargetCodeSignEntitlementsPath(target, configuration string) (string, error) {
+	buildSettings, err := p.TargetBuildSettings(target, configuration, "")
+	if err != nil {
+		return "", err
+	}
+
+	relPth, err := buildSettings.String("CODE_SIGN_ENTITLEMENTS")
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(filepath.Dir(p.Path), relPth), nil
+}
+
+// TargetCodeSignEntitlements ...
+func (p XcodeProj) TargetCodeSignEntitlements(target, configuration string) (serialized.Object, error) {
+	codeSignEntitlementsPth, err := p.TargetCodeSignEntitlementsPath(target, configuration)
+	if err != nil {
+		return nil, err
+	}
+
+	codeSignEntitlementsContent, err := fileutil.ReadBytesFromFile(codeSignEntitlementsPth)
+	if err != nil {
+		return nil, err
+	}
+
+	var codeSignEntitlements serialized.Object
+	if _, err := plist.Unmarshal([]byte(codeSignEntitlementsContent), &codeSignEntitlements); err != nil {
+		return nil, err
+	}
+
+	return codeSignEntitlements, nil
+}
+
+// TargetInformationPropertyListPath ...
+func (p XcodeProj) TargetInformationPropertyListPath(target, configuration string) (string, error) {
+	buildSettings, err := p.TargetBuildSettings(target, configuration, "")
+	if err != nil {
+		return "", err
+	}
+
+	relPth, err := buildSettings.String("INFOPLIST_FILE")
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(filepath.Dir(p.Path), relPth), nil
+}
+
+// TargetInformationPropertyList ...
+func (p XcodeProj) TargetInformationPropertyList(target, configuration string) (serialized.Object, error) {
+	informationPropertyListPth, err := p.TargetInformationPropertyListPath(target, configuration)
+	if err != nil {
+		return nil, err
+	}
+
+	informationPropertyListContent, err := fileutil.ReadBytesFromFile(informationPropertyListPth)
+	if err != nil {
+		return nil, err
+	}
+
+	var informationPropertyList serialized.Object
+	if _, err := plist.Unmarshal([]byte(informationPropertyListContent), &informationPropertyList); err != nil {
+		return nil, err
+	}
+
+	return informationPropertyList, nil
+}
+
+// TargetBundleID ...
+func (p XcodeProj) TargetBundleID(target, configuration string) (string, error) {
+	buildSettings, err := p.TargetBuildSettings(target, configuration, "")
+	if err != nil {
+		return "", err
+	}
+
+	bundleID, err := buildSettings.String("PRODUCT_BUNDLE_IDENTIFIER")
+	if err != nil && !serialized.IsKeyNotFoundError(err) {
+		return "", err
+	}
+
+	if bundleID != "" {
+		return bundleID, nil
+	}
+
+	informationPropertyList, err := p.TargetInformationPropertyList(target, configuration)
+	if err != nil {
+		return "", err
+	}
+
+	bundleID, err = informationPropertyList.String("CFBundleIdentifier")
+	if err != nil {
+		return "", err
+	}
+
+	if bundleID == "" {
+		return "", errors.New("no PRODUCT_BUNDLE_IDENTIFIER build settings nor CFBundleIdentifier information property found")
+	}
+
+	return bundleID, nil
+}
+
+// TargetBuildSettings ...
+func (p XcodeProj) TargetBuildSettings(target, configuration, sdk string) (serialized.Object, error) {
+	return showBuildSettings(p.Path, target, configuration, sdk)
 }
 
 // Scheme ...
@@ -57,7 +168,12 @@ func (p XcodeProj) Schemes() ([]xcscheme.Scheme, error) {
 
 // Open ...
 func Open(pth string) (XcodeProj, error) {
-	pbxProjPth := filepath.Join(pth, "project.pbxproj")
+	absPth, err := pathutil.AbsPath(pth)
+	if err != nil {
+		return XcodeProj{}, err
+	}
+
+	pbxProjPth := filepath.Join(absPth, "project.pbxproj")
 
 	b, err := fileutil.ReadBytesFromFile(pbxProjPth)
 	if err != nil {
@@ -99,8 +215,8 @@ func Open(pth string) (XcodeProj, error) {
 
 	return XcodeProj{
 		Proj: p,
-		Path: pth,
-		Name: strings.TrimSuffix(filepath.Base(pth), filepath.Ext(pth)),
+		Path: absPth,
+		Name: strings.TrimSuffix(filepath.Base(absPth), filepath.Ext(absPth)),
 	}, nil
 }
 

@@ -3,6 +3,15 @@ package serialized
 // Object ...
 type Object map[string]interface{}
 
+// Keys ...
+func (o Object) Keys() []string {
+	var keys []string
+	for key := range o {
+		keys = append(keys, key)
+	}
+	return keys
+}
+
 // Value ...
 func (o Object) Value(key string) (interface{}, error) {
 	value, ok := o[key]

@@ -6,12 +6,23 @@ import (
 
 // Proj ...
 type Proj struct {
-	ID      string
-	Targets []Target
+	ID                     string
+	BuildConfigurationList ConfigurationList
+	Targets                []Target
 }
 
 func parseProj(id string, objects serialized.Object) (Proj, error) {
 	rawPBXProj, err := objects.Object(id)
+	if err != nil {
+		return Proj{}, err
+	}
+
+	buildConfigurationListID, err := rawPBXProj.String("buildConfigurationList")
+	if err != nil {
+		return Proj{}, err
+	}
+
+	buildConfigurationList, err := parseConfigurationList(buildConfigurationListID, objects)
 	if err != nil {
 		return Proj{}, err
 	}
@@ -31,8 +42,9 @@ func parseProj(id string, objects serialized.Object) (Proj, error) {
 	}
 
 	return Proj{
-		ID:      id,
-		Targets: targets,
+		ID: id,
+		BuildConfigurationList: buildConfigurationList,
+		Targets:                targets,
 	}, nil
 }
 
