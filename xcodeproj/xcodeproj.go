@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/bitrise-io/go-utils/pathutil"
+
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-tools/xcode-project/serialized"
 	"github.com/bitrise-tools/xcode-project/xcscheme"
@@ -166,7 +168,12 @@ func (p XcodeProj) Schemes() ([]xcscheme.Scheme, error) {
 
 // Open ...
 func Open(pth string) (XcodeProj, error) {
-	pbxProjPth := filepath.Join(pth, "project.pbxproj")
+	absPth, err := pathutil.AbsPath(pth)
+	if err != nil {
+		return XcodeProj{}, err
+	}
+
+	pbxProjPth := filepath.Join(absPth, "project.pbxproj")
 
 	b, err := fileutil.ReadBytesFromFile(pbxProjPth)
 	if err != nil {
@@ -208,8 +215,8 @@ func Open(pth string) (XcodeProj, error) {
 
 	return XcodeProj{
 		Proj: p,
-		Path: pth,
-		Name: strings.TrimSuffix(filepath.Base(pth), filepath.Ext(pth)),
+		Path: absPth,
+		Name: strings.TrimSuffix(filepath.Base(absPth), filepath.Ext(absPth)),
 	}, nil
 }
 

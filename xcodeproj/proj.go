@@ -48,16 +48,6 @@ func parseProj(id string, objects serialized.Object) (Proj, error) {
 	}, nil
 }
 
-// BuildSettings ...
-func (p Proj) BuildSettings(configuration string) (serialized.Object, error) {
-	for _, buildConfigurationList := range p.BuildConfigurationList.BuildConfigurations {
-		if buildConfigurationList.Name == configuration {
-			return buildConfigurationList.BuildSettings, nil
-		}
-	}
-	return nil, NewConfigurationNotFoundError(configuration)
-}
-
 // Target ...
 func (p Proj) Target(id string) (Target, bool) {
 	for _, target := range p.Targets {

@@ -38,6 +38,7 @@ func showBuildSettings(project, target, configuration, sdk string) (serialized.O
 		args = append(args, "-sdk", sdk)
 	}
 	args = append(args, "-showBuildSettings")
+
 	cmd := command.New("xcodebuild", args...)
 	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
 	if err != nil {
