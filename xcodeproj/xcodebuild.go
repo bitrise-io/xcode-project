@@ -12,7 +12,6 @@ func parseShowBuildSettingsOutput(out string) (serialized.Object, error) {
 	settings := serialized.Object{}
 
 	lines := strings.Split(out, "\n")
-	fmt.Printf("lines: %+v", lines)
 	for _, line := range lines {
 		if strings.HasPrefix(line, "Build settings") {
 			continue
