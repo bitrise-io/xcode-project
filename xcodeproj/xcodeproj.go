@@ -130,11 +130,6 @@ func (p XcodeProj) ProjectBuildSettings(target, configuration, sdk string) (seri
 	return showProjectBuildSettings(p.Path, target, configuration, sdk)
 }
 
-// WrokspaceBuildSettings ...
-func (p XcodeProj) WrokspaceBuildSettings(scheme, configuration, sdk string) (serialized.Object, error) {
-	return showWorkspaceBuildSettings(p.Path, scheme, configuration, sdk)
-}
-
 // Scheme ...
 func (p XcodeProj) Scheme(name string) (xcscheme.Scheme, bool) {
 	schemes, err := p.Schemes()

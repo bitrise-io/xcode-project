@@ -8,7 +8,8 @@ import (
 	"github.com/bitrise-tools/xcode-project/serialized"
 )
 
-func parseShowBuildSettingsOutput(out string) (serialized.Object, error) {
+// ParseShowBuildSettingsOutput ...
+func ParseShowBuildSettingsOutput(out string) (serialized.Object, error) {
 	settings := serialized.Object{}
 
 	lines := strings.Split(out, "\n")
@@ -36,22 +37,6 @@ func parseShowBuildSettingsOutput(out string) (serialized.Object, error) {
 	return settings, nil
 }
 
-func showWorkspaceBuildSettings(workspace, scheme, configuration, sdk string) (serialized.Object, error) {
-	args := []string{"-workspace", workspace, "-scheme", workspace, "-configuration", configuration}
-	if sdk != "" {
-		args = append(args, "-sdk", sdk)
-	}
-	args = append(args, "-showBuildSettings")
-
-	cmd := command.New("xcodebuild", args...)
-	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
-	if err != nil {
-		return nil, fmt.Errorf("%s failed: %s", cmd.PrintableCommandArgs(), err)
-	}
-
-	return parseShowBuildSettingsOutput(out)
-}
-
 func showProjectBuildSettings(project, target, configuration, sdk string) (serialized.Object, error) {
 	args := []string{"-project", project, "-target", target, "-configuration", configuration}
 	if sdk != "" {
@@ -65,5 +50,5 @@ func showProjectBuildSettings(project, target, configuration, sdk string) (seria
 		return nil, fmt.Errorf("%s failed: %s", cmd.PrintableCommandArgs(), err)
 	}
 
-	return parseShowBuildSettingsOutput(out)
+	return ParseShowBuildSettingsOutput(out)
 }
