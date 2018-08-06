@@ -32,7 +32,23 @@ func parseShowBuildSettingsOutput(out string) (serialized.Object, error) {
 	return settings, nil
 }
 
-func showBuildSettings(project, target, configuration, sdk string) (serialized.Object, error) {
+func showWorkspaceBuildSettings(workspace, scheme, configuration, sdk string) (serialized.Object, error) {
+	args := []string{"-workspace", workspace, "-scheme", workspace, "-configuration", configuration}
+	if sdk != "" {
+		args = append(args, "-sdk", sdk)
+	}
+	args = append(args, "-showBuildSettings")
+
+	cmd := command.New("xcodebuild", args...)
+	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("%s failed: %s", cmd.PrintableCommandArgs(), err)
+	}
+
+	return parseShowBuildSettingsOutput(out)
+}
+
+func showProjectBuildSettings(project, target, configuration, sdk string) (serialized.Object, error) {
 	args := []string{"-project", project, "-target", target, "-configuration", configuration}
 	if sdk != "" {
 		args = append(args, "-sdk", sdk)
