@@ -126,8 +126,8 @@ func (p XcodeProj) TargetBundleID(target, configuration string) (string, error) 
 }
 
 // ProjectBuildSettings ...
-func (p XcodeProj) ProjectBuildSettings(scheme, configuration, sdk string) (serialized.Object, error) {
-	return showProjectBuildSettings(p.Path, scheme, configuration, sdk)
+func (p XcodeProj) ProjectBuildSettings(target, configuration, sdk string) (serialized.Object, error) {
+	return showProjectBuildSettings(p.Path, target, configuration, sdk)
 }
 
 // WrokspaceBuildSettings ...
