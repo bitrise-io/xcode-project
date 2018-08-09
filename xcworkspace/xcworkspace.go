@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/bitrise-io/go-utils/fileutil"
+	"github.com/bitrise-tools/xcode-project/serialized"
+	"github.com/bitrise-tools/xcode-project/xcodebuild"
 	"github.com/bitrise-tools/xcode-project/xcodeproj"
 	"github.com/bitrise-tools/xcode-project/xcscheme"
 )
@@ -35,6 +37,11 @@ func (w Workspace) Scheme(name string) (xcscheme.Scheme, string, bool) {
 	}
 
 	return xcscheme.Scheme{}, "", false
+}
+
+// WrokspaceBuildSettings ...
+func (w Workspace) WrokspaceBuildSettings(scheme, configuration, sdk string) (serialized.Object, error) {
+	return xcodebuild.ShowWorkspaceBuildSettings(w.Path, scheme, configuration, sdk)
 }
 
 // Schemes ...
