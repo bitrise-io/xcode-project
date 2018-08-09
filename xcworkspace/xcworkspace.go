@@ -2,13 +2,12 @@ package xcworkspace
 
 import (
 	"encoding/xml"
-	"fmt"
 	"path/filepath"
 	"strings"
 
-	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-tools/xcode-project/serialized"
+	"github.com/bitrise-tools/xcode-project/xcodebuild"
 	"github.com/bitrise-tools/xcode-project/xcodeproj"
 	"github.com/bitrise-tools/xcode-project/xcscheme"
 )
@@ -42,23 +41,7 @@ func (w Workspace) Scheme(name string) (xcscheme.Scheme, string, bool) {
 
 // WrokspaceBuildSettings ...
 func (w Workspace) WrokspaceBuildSettings(scheme, configuration, sdk string) (serialized.Object, error) {
-	return showWorkspaceBuildSettings(w.Path, scheme, configuration, sdk)
-}
-
-func showWorkspaceBuildSettings(workspace, scheme, configuration, sdk string) (serialized.Object, error) {
-	args := []string{"-workspace", workspace, "-scheme", scheme, "-configuration", configuration}
-	if sdk != "" {
-		args = append(args, "-sdk", sdk)
-	}
-	args = append(args, "-showBuildSettings")
-
-	cmd := command.New("xcodebuild", args...)
-	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
-	if err != nil {
-		return nil, fmt.Errorf("%s failed: %s", cmd.PrintableCommandArgs(), err)
-	}
-
-	return xcodeproj.ParseShowBuildSettingsOutput(out)
+	return xcodebuild.ShowWorkspaceBuildSettings(w.Path, scheme, configuration, sdk)
 }
 
 // Schemes ...

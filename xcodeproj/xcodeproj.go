@@ -10,6 +10,7 @@ import (
 
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-tools/xcode-project/serialized"
+	"github.com/bitrise-tools/xcode-project/xcodebuild"
 	"github.com/bitrise-tools/xcode-project/xcscheme"
 	"howett.net/plist"
 )
@@ -127,7 +128,7 @@ func (p XcodeProj) TargetBundleID(target, configuration string) (string, error) 
 
 // ProjectBuildSettings ...
 func (p XcodeProj) ProjectBuildSettings(target, configuration, sdk string) (serialized.Object, error) {
-	return showProjectBuildSettings(p.Path, target, configuration, sdk)
+	return xcodebuild.ShowProjectBuildSettings(p.Path, target, configuration, sdk)
 }
 
 // Scheme ...
