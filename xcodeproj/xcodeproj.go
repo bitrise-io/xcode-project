@@ -25,7 +25,7 @@ type XcodeProj struct {
 
 // TargetCodeSignEntitlementsPath ...
 func (p XcodeProj) TargetCodeSignEntitlementsPath(target, configuration string) (string, error) {
-	buildSettings, err := p.ProjectBuildSettings(target, configuration, "")
+	buildSettings, err := p.TargetBuildSettings(target, configuration, "")
 	if err != nil {
 		return "", err
 	}
@@ -60,7 +60,7 @@ func (p XcodeProj) TargetCodeSignEntitlements(target, configuration string) (ser
 
 // TargetInformationPropertyListPath ...
 func (p XcodeProj) TargetInformationPropertyListPath(target, configuration string) (string, error) {
-	buildSettings, err := p.ProjectBuildSettings(target, configuration, "")
+	buildSettings, err := p.TargetBuildSettings(target, configuration, "")
 	if err != nil {
 		return "", err
 	}
@@ -95,7 +95,7 @@ func (p XcodeProj) TargetInformationPropertyList(target, configuration string) (
 
 // TargetBundleID ...
 func (p XcodeProj) TargetBundleID(target, configuration string) (string, error) {
-	buildSettings, err := p.ProjectBuildSettings(target, configuration, "")
+	buildSettings, err := p.TargetBuildSettings(target, configuration, "")
 	if err != nil {
 		return "", err
 	}
@@ -126,8 +126,8 @@ func (p XcodeProj) TargetBundleID(target, configuration string) (string, error) 
 	return bundleID, nil
 }
 
-// ProjectBuildSettings ...
-func (p XcodeProj) ProjectBuildSettings(target, configuration, sdk string) (serialized.Object, error) {
+// TargetBuildSettings ...
+func (p XcodeProj) TargetBuildSettings(target, configuration, sdk string) (serialized.Object, error) {
 	return xcodebuild.ShowProjectBuildSettings(p.Path, target, configuration, sdk)
 }
 

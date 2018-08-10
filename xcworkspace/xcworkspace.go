@@ -39,8 +39,8 @@ func (w Workspace) Scheme(name string) (xcscheme.Scheme, string, bool) {
 	return xcscheme.Scheme{}, "", false
 }
 
-// WrokspaceBuildSettings ...
-func (w Workspace) WrokspaceBuildSettings(scheme, configuration, sdk string) (serialized.Object, error) {
+// SchemeBuildSettings ...
+func (w Workspace) SchemeBuildSettings(scheme, configuration, sdk string) (serialized.Object, error) {
 	return xcodebuild.ShowWorkspaceBuildSettings(w.Path, scheme, configuration, sdk)
 }
 
