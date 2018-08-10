@@ -195,6 +195,10 @@ const rawProj = `
 		};
 		name = Debug;
 	};
+
+	13E76E0E1F4AC90A0028096E /* code-sign-test.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "code-sign-test.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+	13E76E471F4AC94F0028096E /* share-extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "share-extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+	13E76E311F4AC90A0028096E /* code-sign-testUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "code-sign-testUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 }`
 
 const expectedProj = `{
@@ -293,7 +297,10 @@ const expectedProj = `{
 					}
 				]
 			},
-			"Dependencies": null
+			"Dependencies": null,
+			"ProductReference": {
+				"Path": "code-sign-testUITests.xctest"
+			}
 		}
 	]
 }`
