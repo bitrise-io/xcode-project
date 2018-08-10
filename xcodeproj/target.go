@@ -23,6 +23,7 @@ type Target struct {
 	Name                   string
 	BuildConfigurationList ConfigurationList
 	Dependencies           []TargetDependency
+	ProductReference       ProductReference
 }
 
 // DependentTargets ...
@@ -92,11 +93,25 @@ func parseTarget(id string, objects serialized.Object) (Target, error) {
 		dependencies = append(dependencies, dependency)
 	}
 
+	var productReference ProductReference
+	productReferenceID, err := rawTarget.String("productReference")
+	if err != nil {
+		if !serialized.IsKeyNotFoundError(err) {
+			return Target{}, err
+		}
+	} else {
+		productReference, err = parseProductReference(productReferenceID, objects)
+		if err != nil {
+			return Target{}, err
+		}
+	}
+
 	return Target{
 		Type: targetType,
 		ID:   id,
 		Name: name,
 		BuildConfigurationList: buildConfigurationList,
 		Dependencies:           dependencies,
+		ProductReference:       productReference,
 	}, nil
 }
