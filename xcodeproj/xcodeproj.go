@@ -211,7 +211,7 @@ func Open(pth string) (XcodeProj, error) {
 
 	p, err := parseProj(projectID, objects)
 	if err != nil {
-		return XcodeProj{}, nil
+		return XcodeProj{}, err
 	}
 
 	return XcodeProj{

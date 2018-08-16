@@ -92,7 +92,10 @@ const rawProj = `
 		);
 		buildRules = (
 		);
-		dependencies = ();
+		dependencies = (
+			E62D1D9F1F22422D009F8898 /* PBXTargetDependency */,
+			E67597E61F138112008C1262 /* PBXTargetDependency */,
+		);
 		name = "code-sign-testUITests";
 		productName = "code-sign-testUITests";
 		productReference = 13E76E311F4AC90A0028096E /* code-sign-testUITests.xctest */;
@@ -199,6 +202,18 @@ const rawProj = `
 	13E76E0E1F4AC90A0028096E /* code-sign-test.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "code-sign-test.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 	13E76E471F4AC94F0028096E /* share-extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "share-extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 	13E76E311F4AC90A0028096E /* code-sign-testUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "code-sign-testUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+
+	E62D1D9F1F22422D009F8898 /* PBXTargetDependency */ = {
+		isa = PBXTargetDependency;
+		target = 13E76E301F4AC90A0028096E;
+		targetProxy = E62D1D9E1F22422D009F8898;
+	};
+
+	E67597E61F138112008C1262 /* PBXTargetDependency */ = {
+		isa = PBXTargetDependency;
+		name = MHIdentityKit;
+		targetProxy = E62D1D9E1F22422D009F8898;
+	};
 }`
 
 const expectedProj = `{

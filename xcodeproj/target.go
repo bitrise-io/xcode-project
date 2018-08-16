@@ -87,7 +87,13 @@ func parseTarget(id string, objects serialized.Object) (Target, error) {
 	for _, dependencyID := range dependencyIDs {
 		dependency, err := parseTargetDependency(dependencyID, objects)
 		if err != nil {
-			return Target{}, err
+			// KeyNotFoundError can be only raised if the 'target' property not found on the raw target dependency object
+			// we only care about target dependency, which points to a target
+			if serialized.IsKeyNotFoundError(err) {
+				continue
+			} else {
+				return Target{}, err
+			}
 		}
 
 		dependencies = append(dependencies, dependency)
