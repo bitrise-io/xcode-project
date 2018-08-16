@@ -102,6 +102,18 @@ const rawProj = `
 		productType = "com.apple.product-type.bundle.ui-testing";
 	};
 
+	FD55DAD914CE0B0000F84D24 /* rpcsvc */ = {
+		isa = PBXAggregateTarget;
+		buildConfigurationList = FD55DADA14CE0B0000F84D24 /* Build configuration list for PBXAggregateTarget "rpcsvc" */;
+		buildPhases = (
+			FD55DADC14CE0B0700F84D24 /* Run Script */,
+		);
+		dependencies = (
+		);
+		name = rpcsvc;
+		productName = rpcsvc;
+	};
+
 	7D5B35F720E28EE80022BAE6 /* Build configuration list for PBXProject "XcodeProj" */ = {
 		isa = XCConfigurationList;
 		buildConfigurations = (
@@ -205,7 +217,7 @@ const rawProj = `
 
 	E62D1D9F1F22422D009F8898 /* PBXTargetDependency */ = {
 		isa = PBXTargetDependency;
-		target = 13E76E301F4AC90A0028096E;
+		target = FD55DAD914CE0B0000F84D24;
 		targetProxy = E62D1D9E1F22422D009F8898;
 	};
 
