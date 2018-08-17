@@ -9,6 +9,32 @@ import (
 	"howett.net/plist"
 )
 
+func TestIsExecutableProduct(t *testing.T) {
+	var raw serialized.Object
+	_, err := plist.Unmarshal([]byte(rawNativeTarget), &raw)
+	require.NoError(t, err)
+
+	{
+		target, err := parseTarget("13E76E0D1F4AC90A0028096E", raw)
+		require.NoError(t, err)
+
+		require.True(t, target.IsAppProduct())
+		require.False(t, target.IsAppExtensionProduct())
+		require.True(t, target.IsExecutableProduct())
+	}
+
+	{
+
+		target, err := parseTarget("13E76E461F4AC94F0028096E", raw)
+		require.NoError(t, err)
+
+		require.False(t, target.IsAppProduct())
+		require.True(t, target.IsAppExtensionProduct())
+		require.True(t, target.IsExecutableProduct())
+	}
+
+}
+
 func TestParseTarget(t *testing.T) {
 	t.Log("PBXNativeTarget")
 	{

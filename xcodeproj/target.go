@@ -2,6 +2,7 @@ package xcodeproj
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/bitrise-tools/xcode-project/serialized"
 )
@@ -38,6 +39,39 @@ func (t Target) DependentTargets() []Target {
 	}
 
 	return targets
+}
+
+// DependentExecutableProductTargets ...
+func (t Target) DependentExecutableProductTargets() []Target {
+	var targets []Target
+	for _, targetDependency := range t.Dependencies {
+		childTarget := targetDependency.Target
+		if !childTarget.IsExecutableProduct() {
+			continue
+		}
+
+		targets = append(targets, childTarget)
+
+		childDependentTargets := childTarget.DependentTargets()
+		targets = append(targets, childDependentTargets...)
+	}
+
+	return targets
+}
+
+// IsAppProduct ...
+func (t Target) IsAppProduct() bool {
+	return filepath.Ext(t.ProductReference.Path) == ".app"
+}
+
+// IsAppExtensionProduct ...
+func (t Target) IsAppExtensionProduct() bool {
+	return filepath.Ext(t.ProductReference.Path) == ".appex"
+}
+
+// IsExecutableProduct ...
+func (t Target) IsExecutableProduct() bool {
+	return t.IsAppProduct() || t.IsAppExtensionProduct()
 }
 
 func parseTarget(id string, objects serialized.Object) (Target, error) {
