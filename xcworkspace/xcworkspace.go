@@ -2,10 +2,12 @@ package xcworkspace
 
 import (
 	"encoding/xml"
+	"fmt"
 	"path/filepath"
 	"strings"
 
 	"github.com/bitrise-io/go-utils/fileutil"
+	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-tools/xcode-project/serialized"
 	"github.com/bitrise-tools/xcode-project/xcodebuild"
 	"github.com/bitrise-tools/xcode-project/xcodeproj"
@@ -73,6 +75,13 @@ func (w Workspace) Schemes() (map[string][]xcscheme.Scheme, error) {
 	}
 
 	for _, projectLocation := range projectLocations {
+		if exist, err := pathutil.IsPathExists(projectLocation); err != nil {
+			return nil, fmt.Errorf("failed to check if project exist at: %s, error: %s", projectLocation, err)
+		} else if !exist {
+			// at this point we are interested the schemes visible for the workspace
+			continue
+		}
+
 		project, err := xcodeproj.Open(projectLocation)
 		if err != nil {
 			return nil, err
