@@ -52,6 +52,7 @@ func TestAppBuildActionEntry(t *testing.T) {
 	require.Equal(t, "ios-simple-objc", entry.BuildableReference.BlueprintName)
 	require.Equal(t, "container:ios-simple-objc.xcodeproj", entry.BuildableReference.ReferencedContainer)
 
+	require.True(t, entry.BuildableReference.IsAppReference())
 }
 
 const schemeContent = `<?xml version="1.0" encoding="UTF-8"?>
