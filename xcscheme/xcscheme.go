@@ -73,3 +73,20 @@ func Open(pth string) (Scheme, error) {
 
 	return scheme, nil
 }
+
+// AppBuildActionEntry ...
+func (s Scheme) AppBuildActionEntry() (BuildActionEntry, bool) {
+	var entry BuildActionEntry
+	for _, e := range s.BuildAction.BuildActionEntries {
+		if e.BuildForArchiving != "YES" {
+			continue
+		}
+		if !strings.HasSuffix(e.BuildableReference.BuildableName, ".app") {
+			continue
+		}
+		entry = e
+		break
+	}
+
+	return entry, (entry.BuildableReference.BlueprintIdentifier != "")
+}
