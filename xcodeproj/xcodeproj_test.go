@@ -46,7 +46,7 @@ func TestResolve(t *testing.T) {
 	}
 }
 
-func TestResolveOnce(t *testing.T) {
+func TestExpand(t *testing.T) {
 	t.Log("resolves bundle id in format: prefix.$(ENV_KEY:rfc1034identifier).suffix")
 	{
 		bundleID := `auto_provision.$(PRODUCT_NAME:rfc1034identifier)`
