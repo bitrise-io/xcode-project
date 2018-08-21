@@ -131,7 +131,7 @@ func resolve(bundleID string, buildSettings serialized.Object) (string, error) {
 	resolved := bundleID
 	for true {
 		var err error
-		resolved, err = resolveOnce(resolved, buildSettings)
+		resolved, err = expand(resolved, buildSettings)
 		if err != nil {
 			return "", err
 		}
@@ -149,7 +149,7 @@ func resolve(bundleID string, buildSettings serialized.Object) (string, error) {
 	return "", fmt.Errorf("failed to resolve bundle id: %s", bundleID)
 }
 
-func resolveOnce(bundleID string, buildSettings serialized.Object) (string, error) {
+func expand(bundleID string, buildSettings serialized.Object) (string, error) {
 	if !strings.Contains(bundleID, "$") {
 		return bundleID, nil
 	}

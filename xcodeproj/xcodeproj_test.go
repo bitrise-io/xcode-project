@@ -53,7 +53,7 @@ func TestResolveOnce(t *testing.T) {
 		buildSettings := serialized.Object{
 			"PRODUCT_NAME": "ios-simple-objc",
 		}
-		resolved, err := resolveOnce(bundleID, buildSettings)
+		resolved, err := expand(bundleID, buildSettings)
 		require.NoError(t, err)
 		require.Equal(t, "auto_provision.ios-simple-objc", resolved)
 	}
@@ -64,7 +64,7 @@ func TestResolveOnce(t *testing.T) {
 		buildSettings := serialized.Object{
 			"PRODUCT_NAME": "ios-simple-objc",
 		}
-		resolved, err := resolveOnce(bundleID, buildSettings)
+		resolved, err := expand(bundleID, buildSettings)
 		require.NoError(t, err)
 		require.Equal(t, "auto_provision.ios-simple-objc", resolved)
 	}
@@ -75,7 +75,7 @@ func TestResolveOnce(t *testing.T) {
 		buildSettings := serialized.Object{
 			"PRODUCT_NAME": "ios-simple-objc",
 		}
-		resolved, err := resolveOnce(bundleID, buildSettings)
+		resolved, err := expand(bundleID, buildSettings)
 		require.EqualError(t, err, "auto_provision.$PRODUCT_NAME does not match to pattern: (.*)\\$\\((.*)\\)(.*)")
 		require.Equal(t, "", resolved)
 	}
@@ -84,7 +84,7 @@ func TestResolveOnce(t *testing.T) {
 	{
 		bundleID := `auto_provision.$(PRODUCT_NAME:rfc1034identifier)`
 		buildSettings := serialized.Object{}
-		resolved, err := resolveOnce(bundleID, buildSettings)
+		resolved, err := expand(bundleID, buildSettings)
 		require.EqualError(t, err, "PRODUCT_NAME build settings not found")
 		require.Equal(t, "", resolved)
 	}
