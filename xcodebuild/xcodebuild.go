@@ -37,12 +37,16 @@ func parseShowBuildSettingsOutput(out string) (serialized.Object, error) {
 }
 
 // ShowProjectBuildSettings ...
-func ShowProjectBuildSettings(project, target, configuration, sdk string) (serialized.Object, error) {
+func ShowProjectBuildSettings(project, target, configuration, sdk string, customOptions ...string) (serialized.Object, error) {
 	args := []string{"-project", project, "-target", target, "-configuration", configuration}
 	if sdk != "" {
 		args = append(args, "-sdk", sdk)
 	}
 	args = append(args, "-showBuildSettings")
+
+	if len(customOptions) > 0 {
+		args = append(args, customOptions...)
+	}
 
 	cmd := command.New("xcodebuild", args...)
 	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
@@ -54,12 +58,16 @@ func ShowProjectBuildSettings(project, target, configuration, sdk string) (seria
 }
 
 // ShowWorkspaceBuildSettings ...
-func ShowWorkspaceBuildSettings(workspace, scheme, configuration, sdk string) (serialized.Object, error) {
+func ShowWorkspaceBuildSettings(workspace, scheme, configuration, sdk string, customOptions ...string) (serialized.Object, error) {
 	args := []string{"-workspace", workspace, "-scheme", scheme, "-configuration", configuration}
 	if sdk != "" {
 		args = append(args, "-sdk", sdk)
 	}
 	args = append(args, "-showBuildSettings")
+
+	if len(customOptions) > 0 {
+		args = append(args, customOptions...)
+	}
 
 	cmd := command.New("xcodebuild", args...)
 	out, err := cmd.RunAndReturnTrimmedCombinedOutput()

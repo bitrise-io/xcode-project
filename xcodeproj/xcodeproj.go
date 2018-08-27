@@ -180,7 +180,7 @@ func expand(bundleID string, buildSettings serialized.Object) (string, error) {
 }
 
 // TargetBuildSettings ...
-func (p XcodeProj) TargetBuildSettings(target, configuration, sdk string) (serialized.Object, error) {
+func (p XcodeProj) TargetBuildSettings(target, configuration, sdk string, customOptions ...string) (serialized.Object, error) {
 	return xcodebuild.ShowProjectBuildSettings(p.Path, target, configuration, sdk)
 }
 
