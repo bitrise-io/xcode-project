@@ -17,6 +17,10 @@ func parseShowBuildSettingsOutput(out string) (serialized.Object, error) {
 			continue
 		}
 
+		if strings.HasPrefix(line, "User defaults from command line") {
+			continue
+		}
+
 		if line == "" {
 			continue
 		}
