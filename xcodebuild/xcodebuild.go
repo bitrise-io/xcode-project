@@ -45,8 +45,15 @@ func ShowProjectBuildSettings(project, target, configuration string, customOptio
 	args := []string{"-project", project, "-target", target, "-configuration", configuration}
 	args = append(args, "-showBuildSettings")
 
-	if len(customOptions) > 0 {
-		args = append(args, customOptions...)
+	var filteredCustomOptions []string
+	for _, customOption := range customOptions {
+		if customOption != "" {
+			filteredCustomOptions = append(filteredCustomOptions, customOption)
+		}
+	}
+
+	if len(filteredCustomOptions) > 0 {
+		args = append(args, filteredCustomOptions...)
 	}
 
 	cmd := command.New("xcodebuild", args...)
@@ -63,8 +70,15 @@ func ShowWorkspaceBuildSettings(workspace, scheme, configuration string, customO
 	args := []string{"-workspace", workspace, "-scheme", scheme, "-configuration", configuration}
 	args = append(args, "-showBuildSettings")
 
-	if len(customOptions) > 0 {
-		args = append(args, customOptions...)
+	var filteredCustomOptions []string
+	for _, customOption := range customOptions {
+		if customOption != "" {
+			filteredCustomOptions = append(filteredCustomOptions, customOption)
+		}
+	}
+
+	if len(filteredCustomOptions) > 0 {
+		args = append(args, filteredCustomOptions...)
 	}
 
 	cmd := command.New("xcodebuild", args...)
