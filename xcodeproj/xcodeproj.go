@@ -204,8 +204,7 @@ func (p XcodeProj) Scheme(name string) (xcscheme.Scheme, bool) {
 func (p XcodeProj) Schemes() ([]xcscheme.Scheme, error) {
 	//
 	// Add the shared schemes to the list
-	sharedPattern := filepath.Join(p.Path, "xcshareddata", "xcschemes", "*.xcscheme")
-	pths, err := filepath.Glob(sharedPattern)
+	pths, err := pathsByPattern(p.Path, "xcshareddata", "xcschemes", "*.xcscheme")
 	if err != nil {
 		return nil, err
 	}
@@ -221,8 +220,7 @@ func (p XcodeProj) Schemes() ([]xcscheme.Scheme, error) {
 
 	//
 	// Add the non-shared user schemes to the list
-	userPattern := filepath.Join(p.Path, "xcuserdata", "*.xcuserdatad", "xcschemes", "*.xcscheme")
-	pths, err = filepath.Glob(userPattern)
+	pths, err = pathsByPattern(p.Path, "xcuserdata", "*.xcuserdatad", "xcschemes", "*.xcscheme")
 	if err != nil {
 		return nil, err
 	}
@@ -235,10 +233,6 @@ func (p XcodeProj) Schemes() ([]xcscheme.Scheme, error) {
 		schemes = append(schemes, scheme)
 	}
 
-	fmt.Printf("project path: %s", p.Path)
-	fmt.Printf("paths %v", pths)
-
-	fmt.Printf("%+v", schemes)
 	return schemes, nil
 }
 
@@ -299,4 +293,9 @@ func Open(pth string) (XcodeProj, error) {
 // IsXcodeProj ...
 func IsXcodeProj(pth string) bool {
 	return filepath.Ext(pth) == ".xcodeproj"
+}
+
+func pathsByPattern(paths ...string) ([]string, error) {
+	pattern := filepath.Join(paths...)
+	return filepath.Glob(pattern)
 }

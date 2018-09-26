@@ -50,8 +50,7 @@ func (w Workspace) SchemeBuildSettings(scheme, configuration string, customOptio
 func (w Workspace) Schemes() (map[string][]xcscheme.Scheme, error) {
 	schemesByContainer := map[string][]xcscheme.Scheme{}
 
-	sharedpattern := filepath.Join(w.Path, "xcshareddata", "xcschemes", "*.xcscheme")
-	pths, err := filepath.Glob(sharedpattern)
+	pths, err := pathsByPattern(w.Path, "xcshareddata", "xcschemes", "*.xcscheme")
 	if err != nil {
 		return nil, err
 	}
@@ -69,8 +68,7 @@ func (w Workspace) Schemes() (map[string][]xcscheme.Scheme, error) {
 
 	//
 	// Add the non-shared user schemes to the list
-	userPattern := filepath.Join(w.Path, "xcuserdata", "*.xcuserdatad", "xcschemes", "*.xcscheme")
-	pths, err = filepath.Glob(userPattern)
+	pths, err = pathsByPattern(w.Path, "xcuserdata", "*.xcuserdatad", "xcschemes", "*.xcscheme")
 	if err != nil {
 		return nil, err
 	}
@@ -177,4 +175,9 @@ func Open(pth string) (Workspace, error) {
 // IsWorkspace ...
 func IsWorkspace(pth string) bool {
 	return filepath.Ext(pth) == ".xcworkspace"
+}
+
+func pathsByPattern(paths ...string) ([]string, error) {
+	pattern := filepath.Join(paths...)
+	return filepath.Glob(pattern)
 }
