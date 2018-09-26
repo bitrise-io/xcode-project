@@ -202,22 +202,7 @@ func (p XcodeProj) Scheme(name string) (xcscheme.Scheme, bool) {
 
 // Schemes ...
 func (p XcodeProj) Schemes() ([]xcscheme.Scheme, error) {
-	pattern := filepath.Join(p.Path, "xcshareddata", "xcschemes", "*.xcscheme")
-	pths, err := filepath.Glob(pattern)
-	if err != nil {
-		return nil, err
-	}
-
-	var schemes []xcscheme.Scheme
-	for _, pth := range pths {
-		scheme, err := xcscheme.Open(pth)
-		if err != nil {
-			return nil, err
-		}
-		schemes = append(schemes, scheme)
-	}
-
-	return schemes, nil
+	return xcscheme.FindSchemesIn(p.Path)
 }
 
 // Open ...
