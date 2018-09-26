@@ -184,11 +184,6 @@ func (p XcodeProj) TargetBuildSettings(target, configuration string, customOptio
 	return xcodebuild.ShowProjectBuildSettings(p.Path, target, configuration, customOptions...)
 }
 
-// SchemeBuildSettings ...
-func (p XcodeProj) SchemeBuildSettings(scheme, action, configuration string, customOptions ...string) (serialized.Object, error) {
-	return xcodebuild.ShowProjectBuildSettingsByAction(p.Path, scheme, action, configuration, customOptions...)
-}
-
 // Scheme ...
 func (p XcodeProj) Scheme(name string) (xcscheme.Scheme, bool) {
 	schemes, err := p.Schemes()

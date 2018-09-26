@@ -55,21 +55,6 @@ func ShowProjectBuildSettings(project, target, configuration string, customOptio
 	return parseShowBuildSettingsOutput(out)
 }
 
-// ShowProjectBuildSettingsByAction ...
-func ShowProjectBuildSettingsByAction(project, scheme, action, configuration string, customOptions ...string) (serialized.Object, error) {
-	args := []string{"-project", project, "-scheme", scheme, "-configuration", configuration, action}
-	args = append(args, "-showBuildSettings")
-	args = append(args, customOptions...)
-
-	cmd := command.New("xcodebuild", args...)
-	out, err := cmd.RunAndReturnTrimmedCombinedOutput()
-	if err != nil {
-		return nil, fmt.Errorf("%s failed: %s", cmd.PrintableCommandArgs(), err)
-	}
-
-	return parseShowBuildSettingsOutput(out)
-}
-
 // ShowWorkspaceBuildSettings ...
 func ShowWorkspaceBuildSettings(workspace, scheme, configuration string, customOptions ...string) (serialized.Object, error) {
 	args := []string{"-workspace", workspace, "-scheme", scheme, "-configuration", configuration}
