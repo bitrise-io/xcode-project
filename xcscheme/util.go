@@ -5,38 +5,29 @@ import (
 )
 
 // FindSchemesIn ...
-func FindSchemesIn(root string) ([]Scheme, error) {
+func FindSchemesIn(root string) (schemes []Scheme, err error) {
 	//
 	// Add the shared schemes to the list
-	pths, err := pathsByPattern(root, "xcshareddata", "xcschemes", "*.xcscheme")
+	sharedPths, err := pathsByPattern(root, "xcshareddata", "xcschemes", "*.xcscheme")
 	if err != nil {
 		return nil, err
-	}
-
-	var schemes []Scheme
-	for _, pth := range pths {
-		scheme, err := Open(pth)
-		if err != nil {
-			return nil, err
-		}
-		schemes = append(schemes, scheme)
 	}
 
 	//
 	// Add the non-shared user schemes to the list
-	pths, err = pathsByPattern(root, "xcuserdata", "*.xcuserdatad", "xcschemes", "*.xcscheme")
+	userPths, err := pathsByPattern(root, "xcuserdata", "*.xcuserdatad", "xcschemes", "*.xcscheme")
 	if err != nil {
 		return nil, err
 	}
 
-	for _, pth := range pths {
+	for _, pth := range append(sharedPths, userPths...) {
 		scheme, err := Open(pth)
 		if err != nil {
 			return nil, err
 		}
 		schemes = append(schemes, scheme)
 	}
-	return schemes, nil
+	return
 }
 
 func pathsByPattern(paths ...string) ([]string, error) {
