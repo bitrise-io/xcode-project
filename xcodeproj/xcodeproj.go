@@ -23,19 +23,27 @@ type XcodeProj struct {
 	Path string
 }
 
-// TargetCodeSignEntitlementsPath ...
-func (p XcodeProj) TargetCodeSignEntitlementsPath(target, configuration string) (string, error) {
+func (p XcodeProj) buildSettingsFilePath(target, configuration, key string) (string, error) {
 	buildSettings, err := p.TargetBuildSettings(target, configuration)
 	if err != nil {
 		return "", err
 	}
 
-	relPth, err := buildSettings.String("CODE_SIGN_ENTITLEMENTS")
+	pth, err := buildSettings.String(key)
 	if err != nil {
 		return "", err
 	}
 
-	return filepath.Join(filepath.Dir(p.Path), relPth), nil
+	if pathutil.IsRelativePath(pth) {
+		pth = filepath.Join(filepath.Dir(p.Path), pth)
+	}
+
+	return pth, nil
+}
+
+// TargetCodeSignEntitlementsPath ...
+func (p XcodeProj) TargetCodeSignEntitlementsPath(target, configuration string) (string, error) {
+	return p.buildSettingsFilePath(target, configuration, "CODE_SIGN_ENTITLEMENTS")
 }
 
 // TargetCodeSignEntitlements ...
@@ -60,17 +68,7 @@ func (p XcodeProj) TargetCodeSignEntitlements(target, configuration string) (ser
 
 // TargetInformationPropertyListPath ...
 func (p XcodeProj) TargetInformationPropertyListPath(target, configuration string) (string, error) {
-	buildSettings, err := p.TargetBuildSettings(target, configuration)
-	if err != nil {
-		return "", err
-	}
-
-	relPth, err := buildSettings.String("INFOPLIST_FILE")
-	if err != nil {
-		return "", err
-	}
-
-	return filepath.Join(filepath.Dir(p.Path), relPth), nil
+	return p.buildSettingsFilePath(target, configuration, "INFOPLIST_FILE")
 }
 
 // TargetInformationPropertyList ...
