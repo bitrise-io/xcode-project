@@ -23,7 +23,7 @@ type Workspace struct {
 	Path string
 }
 
-// Scheme returns the scheme with the given name and it's container
+// Scheme returns the scheme with the given name and it's container's file path
 func (w Workspace) Scheme(name string) (xcscheme.Scheme, string, error) {
 	schemesByContainer, err := w.Schemes()
 	if err != nil {
