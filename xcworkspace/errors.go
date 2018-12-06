@@ -8,11 +8,6 @@ type SchemeNotFoundError struct {
 	container string
 }
 
-// NewSchemeNotFoundError creates a new SchemeNotFoundError
-func NewSchemeNotFoundError(scheme, container string) SchemeNotFoundError {
-	return SchemeNotFoundError{scheme: scheme, container: container}
-}
-
 // Error implements the error interface
 func (e SchemeNotFoundError) Error() string {
 	return fmt.Sprintf("scheme %s not found in %s", e.scheme, e.container)

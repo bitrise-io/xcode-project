@@ -38,7 +38,7 @@ func (w Workspace) Scheme(name string) (xcscheme.Scheme, string, error) {
 		}
 	}
 
-	return xcscheme.Scheme{}, "", NewSchemeNotFoundError(name, w.Name)
+	return xcscheme.Scheme{}, "", SchemeNotFoundError{scheme: name, container: w.Name}
 }
 
 // SchemeBuildSettings ...
