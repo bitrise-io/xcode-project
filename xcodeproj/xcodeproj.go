@@ -183,11 +183,11 @@ func (p XcodeProj) TargetBuildSettings(target, configuration string, customOptio
 	return xcodebuild.ShowProjectBuildSettings(p.Path, target, configuration, customOptions...)
 }
 
-// Scheme ...
-func (p XcodeProj) Scheme(name string) (xcscheme.Scheme, bool) {
+// Scheme returns the project's scheme by name and the project's absolute path.
+func (p XcodeProj) Scheme(name string) (*xcscheme.Scheme, string, error) {
 	schemes, err := p.Schemes()
 	if err != nil {
-		return xcscheme.Scheme{}, false
+		return nil, "", err
 	}
 
 	normName := norm.NFC.String(name)
@@ -197,7 +197,7 @@ func (p XcodeProj) Scheme(name string) (xcscheme.Scheme, bool) {
 		}
 	}
 
-	return xcscheme.Scheme{}, false
+	return nil, "", xcscheme.NotFoundError{Scheme: name, Container: p.Name}
 }
 
 // Schemes ...

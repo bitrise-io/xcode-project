@@ -4,8 +4,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/bitrise-io/xcode-project/serialized"
-	"github.com/bitrise-io/xcode-project/testhelper"
+	"github.com/bitrise-tools/xcode-project/serialized"
+	"github.com/bitrise-tools/xcode-project/testhelper"
+	"github.com/bitrise-tools/xcode-project/xcscheme"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/unicode/norm"
 )
@@ -160,19 +161,22 @@ func TestTargets(t *testing.T) {
 
 func TestScheme(t *testing.T) {
 	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-samples/xcode-project-test.git")
-	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
+	pth := filepath.Join(dir, "XcodeProj.xcodeproj")
+	project, err := Open(pth)
 	require.NoError(t, err)
 
 	{
-		scheme, ok := project.Scheme("ProjectTodayExtensionScheme")
-		require.True(t, ok)
+		scheme, container, err := project.Scheme("ProjectTodayExtensionScheme")
+		require.NoError(t, err)
 		require.Equal(t, "ProjectTodayExtensionScheme", scheme.Name)
+		require.Equal(t, pth, container)
 	}
 
 	{
-		scheme, ok := project.Scheme("NotExistScheme")
-		require.False(t, ok)
-		require.Equal(t, "", scheme.Name)
+		scheme, container, err := project.Scheme("NotExistScheme")
+		require.EqualError(t, err, "scheme NotExistScheme not found in XcodeProj")
+		require.Equal(t, (*xcscheme.Scheme)(nil), scheme)
+		require.Equal(t, "", container)
 	}
 
 	{
