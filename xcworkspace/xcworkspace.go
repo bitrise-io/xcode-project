@@ -12,6 +12,7 @@ import (
 	"github.com/bitrise-tools/xcode-project/xcodebuild"
 	"github.com/bitrise-tools/xcode-project/xcodeproj"
 	"github.com/bitrise-tools/xcode-project/xcscheme"
+	"golang.org/x/text/unicode/norm"
 )
 
 // Workspace represents an Xcode workspace
@@ -30,9 +31,11 @@ func (w Workspace) Scheme(name string) (xcscheme.Scheme, string, error) {
 		return xcscheme.Scheme{}, "", err
 	}
 
+	normName := norm.NFC.String(name)
 	for container, schemes := range schemesByContainer {
 		for _, scheme := range schemes {
-			if scheme.Name == name {
+			normSchemeName := norm.NFC.String(scheme.Name)
+			if normSchemeName == normName {
 				return scheme, container, nil
 			}
 		}
