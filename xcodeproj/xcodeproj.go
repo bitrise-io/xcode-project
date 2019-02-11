@@ -192,8 +192,7 @@ func (p XcodeProj) Scheme(name string) (xcscheme.Scheme, bool) {
 
 	normName := norm.NFC.String(name)
 	for _, scheme := range schemes {
-		normSchemeName := norm.NFC.String(scheme.Name)
-		if normSchemeName == normName {
+		if norm.NFC.String(scheme.Name) == normName {
 			return scheme, true
 		}
 	}
