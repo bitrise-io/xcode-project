@@ -34,8 +34,7 @@ func (w Workspace) Scheme(name string) (xcscheme.Scheme, string, error) {
 	normName := norm.NFC.String(name)
 	for container, schemes := range schemesByContainer {
 		for _, scheme := range schemes {
-			normSchemeName := norm.NFC.String(scheme.Name)
-			if normSchemeName == normName {
+			if norm.NFC.String(scheme.Name) == normName {
 				return scheme, container, nil
 			}
 		}
