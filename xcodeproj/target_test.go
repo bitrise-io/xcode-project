@@ -1,6 +1,7 @@
 package xcodeproj
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/bitrise-tools/xcode-project/pretty"
@@ -8,6 +9,77 @@ import (
 	"github.com/stretchr/testify/require"
 	"howett.net/plist"
 )
+
+func TestTarget_DependentExecutableProductTargets(t *testing.T) {
+	notExecutableTarget := Target{
+		Type:         NativeTargetType,
+		ID:           "com.test.framawork",
+		Name:         "",
+		Dependencies: []TargetDependency{},
+		ProductReference: ProductReference{
+			Path: "test.framework",
+		},
+	}
+	executableTarget := Target{
+		Type:         NativeTargetType,
+		ID:           "com.test.ext",
+		Name:         "",
+		Dependencies: []TargetDependency{},
+		ProductReference: ProductReference{
+			Path: "test.appex",
+		},
+	}
+	type fields struct {
+		Type                   TargetType
+		ID                     string
+		Name                   string
+		BuildConfigurationList ConfigurationList
+		Dependencies           []TargetDependency
+		ProductReference       ProductReference
+		ProductType            string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   []Target
+	}{
+		{
+			name: "Not executable dependent target",
+			fields: fields{
+				Type: NativeTargetType,
+				Name: "",
+				Dependencies: []TargetDependency{
+					{
+						Target: notExecutableTarget,
+					},
+					{
+						Target: executableTarget,
+					},
+				},
+				ProductReference: ProductReference{
+					Path: "test.app",
+				},
+			},
+			want: []Target{executableTarget},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			target := Target{
+				Type:                   tt.fields.Type,
+				ID:                     tt.fields.ID,
+				Name:                   tt.fields.Name,
+				BuildConfigurationList: tt.fields.BuildConfigurationList,
+				Dependencies:           tt.fields.Dependencies,
+				ProductReference:       tt.fields.ProductReference,
+				ProductType:            tt.fields.ProductType,
+			}
+			if got := target.DependentExecutableProductTargets(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Target.DependentExecutableProductTargets() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 
 func TestIsExecutableProduct(t *testing.T) {
 	var raw serialized.Object
