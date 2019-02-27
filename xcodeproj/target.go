@@ -3,6 +3,7 @@ package xcodeproj
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/bitrise-io/xcode-project/serialized"
 )
@@ -26,6 +27,7 @@ type Target struct {
 	Dependencies           []TargetDependency
 	ProductReference       ProductReference
 	ProductType            string
+	AssetCatalogs          map[string]string
 }
 
 // DependentTargets ...
@@ -152,6 +154,19 @@ func parseTarget(id string, objects serialized.Object) (Target, error) {
 		}
 	}
 
+	buildPhaseIDs, err := rawTarget.StringSlice("buildPhases")
+	if err != nil {
+		return Target{}, err
+	}
+	resourcesBuildPhase, err := filterResourcesBuildPhase(buildPhaseIDs, objects)
+	if err != nil {
+		return Target{}, err
+	}
+	assetCatalogs, err := filterAssetCatalogs(resourcesBuildPhase, objects)
+	if err != nil {
+		return Target{}, err
+	}
+
 	return Target{
 		Type:                   targetType,
 		ID:                     id,
@@ -160,5 +175,45 @@ func parseTarget(id string, objects serialized.Object) (Target, error) {
 		Dependencies:           dependencies,
 		ProductReference:       productReference,
 		ProductType:            productType,
+		AssetCatalogs:          assetCatalogs,
 	}, nil
+}
+
+func filterResourcesBuildPhase(buildPhases []string, objects serialized.Object) (resourcesBuildPhase, error) {
+	for _, buildPhaseUUID := range buildPhases {
+		rawBuildPhase, err := objects.Object(buildPhaseUUID)
+		if err != nil {
+			return resourcesBuildPhase{}, err
+		}
+		if isResourceBuildPhase(rawBuildPhase) {
+			buildPhrase, err := parseResourcesBuildPhase(buildPhaseUUID, objects)
+			if err != nil {
+				return resourcesBuildPhase{}, fmt.Errorf("failed to parse ResourcesBuildPhase, error: %s", err)
+			}
+			return buildPhrase, nil
+		}
+	}
+	return resourcesBuildPhase{}, fmt.Errorf("not found")
+}
+
+func filterAssetCatalogs(buildPhase resourcesBuildPhase, objects serialized.Object) (map[string]string, error) {
+	assetCatalogs := make(map[string]string)
+	for _, fileUUID := range buildPhase.files {
+		buildFile, err := parseBuildFile(fileUUID, objects)
+		if err != nil {
+			return nil, err
+		}
+
+		fileReference, err := parseFileReference(buildFile.fileRef, objects)
+		if err != nil {
+			return nil, err
+		}
+
+		const xcassetsExt = ".xcassets"
+		if strings.HasSuffix(fileReference.path, xcassetsExt) {
+			assetCatalogName := strings.TrimSuffix(fileReference.path, xcassetsExt)
+			assetCatalogs[assetCatalogName] = fileReference.path
+		}
+	}
+	return assetCatalogs, nil
 }
