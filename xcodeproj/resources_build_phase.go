@@ -2,6 +2,7 @@ package xcodeproj
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/bitrise-tools/xcode-project/serialized"
 )
@@ -75,15 +76,29 @@ type fileReference struct {
 	path string
 }
 
+const fileReferenceElementType = "PBXFileReference"
+
+func isFileReference(raw serialized.Object) (bool, error) {
+	if isa, err := raw.String("isa"); err != nil {
+		return false, err
+	} else if isa == fileReferenceElementType {
+		return true, nil
+	}
+	return false, nil
+}
+
 func parseFileReference(id string, objects serialized.Object) (fileReference, error) {
 	rawFileReference, err := objects.Object(id)
 	if err != nil {
 		return fileReference{}, err
 	}
-	if isa, err := rawFileReference.String("isa"); err != nil {
+
+	log.Printf("FileReference: %v+", rawFileReference)
+
+	if ok, err := isFileReference(rawFileReference); err != nil {
 		return fileReference{}, err
-	} else if isa != "PBXFileReference" {
-		return fileReference{}, fmt.Errorf("not a PBXFileReference element")
+	} else if !ok {
+		return fileReference{}, fmt.Errorf("not a %s element", fileReferenceElementType)
 	}
 
 	path, err := rawFileReference.String("path")

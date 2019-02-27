@@ -72,3 +72,47 @@ const rawResourcesBuildPhase = `
 		};
 /* End PBXResourcesBuildPhase section */
 `
+
+func Test_parseFileReference(t *testing.T) {
+	var raw serialized.Object
+	_, err := plist.Unmarshal([]byte(rawFileReference), &raw)
+	if err != nil {
+		t.Errorf("setup: failed to parse raw object")
+	}
+
+	tests := []struct {
+		name string
+
+		id      string
+		objects serialized.Object
+
+		want    fileReference
+		wantErr bool
+	}{
+		{
+			name:    "Normal case",
+			id:      "47C11A4921FF63970084FD7F",
+			objects: raw,
+			want: fileReference{
+				path: "Assets.xcassets",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseFileReference(tt.id, tt.objects)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseFileReference() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("parseFileReference() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+const rawFileReference = `
+47C11A4921FF63970084FD7F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+`
