@@ -9,7 +9,7 @@ type Proj struct {
 	ID                     string
 	BuildConfigurationList ConfigurationList
 	Targets                []Target
-	TargetToAssetCatalogs  map[string]map[string]string
+	TargetToAssetCatalogs  map[string][]string
 }
 
 func parseProj(id string, objects serialized.Object) (Proj, error) {
@@ -42,7 +42,7 @@ func parseProj(id string, objects serialized.Object) (Proj, error) {
 		targets = append(targets, target)
 	}
 
-	targetToAssetCatalogs := make(map[string]map[string]string)
+	targetToAssetCatalogs := make(map[string][]string)
 	for _, target := range targets {
 		resourcesBuildPhase, err := filterResourcesBuildPhase(target.buildPhaseIDs, objects)
 		if err != nil {

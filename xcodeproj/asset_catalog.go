@@ -24,8 +24,8 @@ func filterResourcesBuildPhase(buildPhases []string, objects serialized.Object) 
 	return resourcesBuildPhase{}, fmt.Errorf("not found")
 }
 
-func filterAssetCatalogs(buildPhase resourcesBuildPhase, objects serialized.Object) (map[string]string, error) {
-	assetCatalogs := make(map[string]string)
+func filterAssetCatalogs(buildPhase resourcesBuildPhase, objects serialized.Object) ([]string, error) {
+	var assetCatalogs []string
 	for _, fileUUID := range buildPhase.files {
 		buildFile, err := parseBuildFile(fileUUID, objects)
 		if err != nil {
@@ -51,8 +51,7 @@ func filterAssetCatalogs(buildPhase resourcesBuildPhase, objects serialized.Obje
 
 		const xcassetsExt = ".xcassets"
 		if strings.HasSuffix(fileReference.path, xcassetsExt) {
-			assetCatalogName := strings.TrimSuffix(fileReference.path, xcassetsExt)
-			assetCatalogs[assetCatalogName] = fileReference.path
+			assetCatalogs = append(assetCatalogs, fileReference.path)
 		}
 	}
 	return assetCatalogs, nil
