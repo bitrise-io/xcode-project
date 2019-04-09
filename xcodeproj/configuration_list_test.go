@@ -3,8 +3,8 @@ package xcodeproj
 import (
 	"testing"
 
-	"github.com/bitrise-tools/xcode-project/pretty"
-	"github.com/bitrise-tools/xcode-project/serialized"
+	"github.com/bitrise-io/xcode-project/pretty"
+	"github.com/bitrise-io/xcode-project/serialized"
 	"github.com/stretchr/testify/require"
 	"howett.net/plist"
 )
