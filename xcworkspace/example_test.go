@@ -1,6 +1,6 @@
 package xcworkspace
 
-import "github.com/bitrise-tools/xcode-project/xcodeproj"
+import "github.com/bitrise-io/xcode-project/xcodeproj"
 
 func Example() {
 	workspace, err := Open("workspace.xcworkspace")
