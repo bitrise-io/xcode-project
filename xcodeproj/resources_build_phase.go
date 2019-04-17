@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/bitrise-tools/xcode-project/serialized"
+	"github.com/bitrise-io/xcode-project/serialized"
 )
 
 // resourcesBuildPhase represents a PBXResourcesBuildPhase element

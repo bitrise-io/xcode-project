@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bitrise-tools/xcode-project/serialized"
+	"github.com/bitrise-io/xcode-project/serialized"
 )
 
 func filterResourcesBuildPhase(buildPhases []string, objects serialized.Object) (resourcesBuildPhase, error) {
