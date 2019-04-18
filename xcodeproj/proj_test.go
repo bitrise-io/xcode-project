@@ -30,14 +30,6 @@ func TestParseProj(t *testing.T) {
 	}
 }
 
-func TestRealProj(t *testing.T) {
-	project, err := Open("/Users/lpusok/Develop/keybase-client/osx/Keybase.xcodeproj")
-	t.Logf("project: %s", project)
-	if err != nil {
-		t.Fatalf("failed hard: %s", err)
-	}
-}
-
 const rawProj = `
 {
 	/* Begin PBXBuildFile section */

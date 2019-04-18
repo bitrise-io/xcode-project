@@ -2,6 +2,7 @@ package xcodeproj
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/bitrise-io/go-utils/pathutil"
@@ -64,9 +65,12 @@ func filterResourcesBuildPhase(buildPhases []string, objects serialized.Object) 
 func filterAssetCatalogs(buildPhase resourcesBuildPhase, objects serialized.Object) ([]string, error) {
 	assetCatalogs := []string{}
 	for _, fileUUID := range buildPhase.files {
+		log.Printf("fdagadfg fileUUID %s", fileUUID)
 		buildFile, err := parseBuildFile(fileUUID, objects)
 		if err != nil {
-			return nil, err
+			// ignore:
+			// D0177B971F26869C0044446D /* (null) in Resources */ = {isa = PBXBuildFile; };
+			continue
 		}
 
 		// can be PBXVariantGroup or PBXFileReference

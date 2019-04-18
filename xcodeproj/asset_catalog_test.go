@@ -8,7 +8,7 @@ import (
 	"howett.net/plist"
 )
 
-func TestAssetCatalogs(t *testing.T) {
+func Test_assetCatalogs(t *testing.T) {
 	var objects serialized.Object
 	_, err := plist.Unmarshal([]byte(rawProj), &objects)
 	if err != nil {
