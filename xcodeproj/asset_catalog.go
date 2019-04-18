@@ -25,7 +25,7 @@ func filterResourcesBuildPhase(buildPhases []string, objects serialized.Object) 
 }
 
 func filterAssetCatalogs(buildPhase resourcesBuildPhase, objects serialized.Object) ([]string, error) {
-	var assetCatalogs []string
+	assetCatalogs := []string{}
 	for _, fileUUID := range buildPhase.files {
 		buildFile, err := parseBuildFile(fileUUID, objects)
 		if err != nil {

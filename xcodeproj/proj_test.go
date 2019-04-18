@@ -743,9 +743,9 @@ const expectedProj = `{
 		}
 	],
 	"TargetToAssetCatalogs": {
-		"BA3CBE7419F7A93800CED4D5": {
-			"Images": "Images.xcassets"
-		},
-		"BA3CBE9019F7A93900CED4D5": {}
+		"BA3CBE7419F7A93800CED4D5": [
+			"Images.xcassets"
+		],
+		"BA3CBE9019F7A93900CED4D5": []
 	}
 }`

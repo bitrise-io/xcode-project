@@ -42,7 +42,7 @@ func parseProj(id string, objects serialized.Object) (Proj, error) {
 		targets = append(targets, target)
 	}
 
-	targetToAssetCatalogs := make(map[string][]string)
+	targetToAssetCatalogs := map[string][]string{}
 	for _, target := range targets {
 		resourcesBuildPhase, err := filterResourcesBuildPhase(target.buildPhaseIDs, objects)
 		if err != nil {
