@@ -2,7 +2,6 @@ package xcodeproj
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/bitrise-io/xcode-project/serialized"
 )
@@ -92,8 +91,6 @@ func parseFileReference(id string, objects serialized.Object) (fileReference, er
 	if err != nil {
 		return fileReference{}, err
 	}
-
-	log.Printf("FileReference: %v+", rawFileReference)
 
 	if ok, err := isFileReference(rawFileReference); err != nil {
 		return fileReference{}, err
