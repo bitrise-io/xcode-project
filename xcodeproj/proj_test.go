@@ -30,6 +30,14 @@ func TestParseProj(t *testing.T) {
 	}
 }
 
+func TestRealProj(t *testing.T) {
+	project, err := Open("/Users/lpusok/Develop/keybase-client/osx/Keybase.xcodeproj")
+	t.Logf("project: %s", project)
+	if err != nil {
+		t.Fatalf("failed hard: %s", err)
+	}
+}
+
 const rawProj = `
 {
 	/* Begin PBXBuildFile section */
@@ -741,11 +749,5 @@ const expectedProj = `{
 			},
 			"ProductType": "com.apple.product-type.bundle.unit-test"
 		}
-	],
-	"TargetToAssetCatalogs": {
-		"BA3CBE7419F7A93800CED4D5": [
-			"Images.xcassets"
-		],
-		"BA3CBE9019F7A93900CED4D5": []
-	}
+	]
 }`

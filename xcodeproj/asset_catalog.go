@@ -4,8 +4,45 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/xcode-project/serialized"
 )
+
+// TargetsToAssetCatalogs maps target names to an array of asset catalog namess
+type TargetsToAssetCatalogs map[string][]string
+
+// AssetCatalogs parses a xcode project and returns targets mnapped to asset catalogs
+func AssetCatalogs(projectPth string) (TargetsToAssetCatalogs, error) {
+	absPth, err := pathutil.AbsPath(projectPth)
+	if err != nil {
+		return TargetsToAssetCatalogs{}, err
+	}
+
+	objects, projectID, err := open(absPth)
+
+	p, err := parseProj(projectID, objects)
+	if err != nil {
+		return TargetsToAssetCatalogs{}, err
+	}
+
+	return assetCatalogs(p.Targets, objects)
+}
+
+func assetCatalogs(targets []Target, objects serialized.Object) (TargetsToAssetCatalogs, error) {
+	targetToAssetCatalogs := map[string][]string{}
+	for _, target := range targets {
+		resourcesBuildPhase, err := filterResourcesBuildPhase(target.buildPhaseIDs, objects)
+		if err != nil {
+			return TargetsToAssetCatalogs{}, fmt.Errorf("getting resource build phases failed, error: %s", err)
+		}
+		assetCatalogs, err := filterAssetCatalogs(resourcesBuildPhase, objects)
+		if err != nil {
+			return TargetsToAssetCatalogs{}, err
+		}
+		targetToAssetCatalogs[target.ID] = assetCatalogs
+	}
+	return targetToAssetCatalogs, nil
+}
 
 func filterResourcesBuildPhase(buildPhases []string, objects serialized.Object) (resourcesBuildPhase, error) {
 	for _, buildPhaseUUID := range buildPhases {
@@ -21,7 +58,7 @@ func filterResourcesBuildPhase(buildPhases []string, objects serialized.Object) 
 			return buildPhrase, nil
 		}
 	}
-	return resourcesBuildPhase{}, fmt.Errorf("not found")
+	return resourcesBuildPhase{}, fmt.Errorf("resource build phase not found")
 }
 
 func filterAssetCatalogs(buildPhase resourcesBuildPhase, objects serialized.Object) ([]string, error) {
