@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/bitrise-io/go-utils/sliceutil"
+
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/xcode-project/serialized"
 )
@@ -70,7 +72,7 @@ func appIconSetPaths(project Proj, projectPath string, objects serialized.Object
 			}
 			appIcons = append(appIcons, appIconSetPaths...)
 		}
-		targetToAppIcons[iconTarget.target.ID] = appIcons
+		targetToAppIcons[iconTarget.target.ID] = sliceutil.UniqueStringSlice(appIcons)
 	}
 
 	return targetToAppIcons, nil
@@ -85,11 +87,8 @@ func lookupAppIconPaths(projectPath string, assetCatalogs []fileReference, appIc
 			return nil, fmt.Errorf("could not resolve path")
 		}
 
-		wildcharAppIconSetName := appIconSetName
-		baseIconName := strings.Split(appIconSetName, "${")
-		if len(baseIconName) > 1 {
-			wildcharAppIconSetName = baseIconName[0] + "*"
-		}
+		re := regexp.MustCompile(`\$\{(.+)\}`)
+		wildcharAppIconSetName := re.ReplaceAllString(appIconSetName, "*")
 
 		matches, err := filepath.Glob(path.Join(regexp.QuoteMeta(resolvedPath), wildcharAppIconSetName+".appiconset"))
 		if err != nil {
@@ -169,30 +168,19 @@ func filterAssetCatalogs(buildPhase resourcesBuildPhase, projectID string, objec
 func getAppIconSetNames(target Target) ([]string, error) {
 	const appIconSetNameKey = "ASSETCATALOG_COMPILER_APPICON_NAME"
 
-	found, defaultConfiguration := defaultConfiguration(target)
-	if !found {
-		return nil, fmt.Errorf("default configuration not found for target: %s", target)
-	}
-
-	appIconSetNameRaw, ok := defaultConfiguration.BuildSettings[appIconSetNameKey]
-	if !ok {
-		return nil, nil
-	}
-
-	appIconSetName, ok := appIconSetNameRaw.(string)
-	if !ok {
-		return nil, fmt.Errorf("type assertion failed for value of key %s", appIconSetNameKey)
-	}
-
-	return []string{appIconSetName}, nil
-}
-
-func defaultConfiguration(target Target) (bool, BuildConfiguration) {
-	defaultConfigurationName := target.BuildConfigurationList.DefaultConfigurationName
+	appIconSetNames := []string{}
 	for _, configuration := range target.BuildConfigurationList.BuildConfigurations {
-		if configuration.Name == defaultConfigurationName {
-			return true, configuration
+		appIconSetNameRaw, ok := configuration.BuildSettings[appIconSetNameKey]
+		if !ok {
+			return nil, nil
 		}
+		appIconSetName, ok := appIconSetNameRaw.(string)
+		if !ok {
+			return nil, fmt.Errorf("type assertion failed for value of key %s", appIconSetNameKey)
+		}
+
+		appIconSetNames = append(appIconSetNames, appIconSetName)
 	}
-	return false, BuildConfiguration{}
+
+	return appIconSetNames, nil
 }
