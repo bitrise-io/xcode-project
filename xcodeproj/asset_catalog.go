@@ -8,10 +8,10 @@ import (
 	"github.com/bitrise-io/xcode-project/serialized"
 )
 
-// TargetsToAssetCatalogs maps target names to an array of asset catalog namess
+// TargetsToAssetCatalogs maps target names to an array of asset catalog paths
 type TargetsToAssetCatalogs map[string][]string
 
-// AssetCatalogs parses a xcode project and returns targets mnapped to asset catalogs
+// AssetCatalogs parses an Xcode project and returns targets mapped to asset catalogs
 func AssetCatalogs(projectPth string) (TargetsToAssetCatalogs, error) {
 	absPth, err := pathutil.AbsPath(projectPth)
 	if err != nil {
@@ -25,18 +25,18 @@ func AssetCatalogs(projectPth string) (TargetsToAssetCatalogs, error) {
 		return TargetsToAssetCatalogs{}, err
 	}
 
-	return assetCatalogs(p.Targets, objects)
+	return assetCatalogs(p.Targets, projectID, objects)
 }
 
-func assetCatalogs(targets []Target, objects serialized.Object) (TargetsToAssetCatalogs, error) {
+func assetCatalogs(targets []Target, projectID string, objects serialized.Object) (TargetsToAssetCatalogs, error) {
 	targetToAssetCatalogs := map[string][]string{}
 	for _, target := range targets {
-		if target.Type == NativeTargetType { // Ignoring PBXAggregateTarget and PBXLegacyTarget as may not contain build phase
+		if target.Type == NativeTargetType { // Ignoring PBXAggregateTarget and PBXLegacyTarget as may not contain buildPhases key
 			resourcesBuildPhase, err := filterResourcesBuildPhase(target.buildPhaseIDs, objects)
 			if err != nil {
 				return TargetsToAssetCatalogs{}, fmt.Errorf("getting resource build phases failed, error: %s", err)
 			}
-			assetCatalogs, err := filterAssetCatalogs(resourcesBuildPhase, objects)
+			assetCatalogs, err := filterAssetCatalogs(resourcesBuildPhase, projectID, objects)
 			if err != nil {
 				return TargetsToAssetCatalogs{}, err
 			}
@@ -53,17 +53,17 @@ func filterResourcesBuildPhase(buildPhases []string, objects serialized.Object) 
 			return resourcesBuildPhase{}, err
 		}
 		if isResourceBuildPhase(rawBuildPhase) {
-			buildPhrase, err := parseResourcesBuildPhase(buildPhaseUUID, objects)
+			buildPhase, err := parseResourcesBuildPhase(buildPhaseUUID, objects)
 			if err != nil {
 				return resourcesBuildPhase{}, fmt.Errorf("failed to parse ResourcesBuildPhase, error: %s", err)
 			}
-			return buildPhrase, nil
+			return buildPhase, nil
 		}
 	}
 	return resourcesBuildPhase{}, fmt.Errorf("resource build phase not found")
 }
 
-func filterAssetCatalogs(buildPhase resourcesBuildPhase, objects serialized.Object) ([]string, error) {
+func filterAssetCatalogs(buildPhase resourcesBuildPhase, projectID string, objects serialized.Object) ([]string, error) {
 	assetCatalogs := []string{}
 	for _, fileUUID := range buildPhase.files {
 		buildFile, err := parseBuildFile(fileUUID, objects)
@@ -90,9 +90,13 @@ func filterAssetCatalogs(buildPhase resourcesBuildPhase, objects serialized.Obje
 			return nil, err
 		}
 
-		const xcassetsExt = ".xcassets"
-		if strings.HasSuffix(fileReference.path, xcassetsExt) {
-			assetCatalogs = append(assetCatalogs, fileReference.path)
+		if strings.HasSuffix(fileReference.path, ".xcassets") {
+			resolvedPath, err := resolveFileReferenceAbsolutePath(fileReference, projectID, objects)
+			if err != nil {
+				return nil, err
+			} else if resolvedPath != "" {
+				assetCatalogs = append(assetCatalogs, resolvedPath)
+			}
 		}
 	}
 	return assetCatalogs, nil

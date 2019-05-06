@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/xcode-project/serialized"
 	"howett.net/plist"
 )
@@ -94,7 +95,9 @@ func Test_parseFileReference(t *testing.T) {
 			id:      "47C11A4921FF63970084FD7F",
 			objects: raw,
 			want: fileReference{
-				path: "Assets.xcassets",
+				id:         "47C11A4921FF63970084FD7F",
+				path:       "Assets.xcassets",
+				sourceTree: groupParent,
 			},
 			wantErr: false,
 		},
@@ -116,3 +119,55 @@ func Test_parseFileReference(t *testing.T) {
 const rawFileReference = `
 47C11A4921FF63970084FD7F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 `
+
+func Test_resolveFileReferenceAbsolutePath(t *testing.T) {
+	const projectPth = "/Users/lpusok/Develop/_ios_github/OnionBrowser-2.X/OnionBrowser2.xcodeproj"
+	absPth, err := pathutil.AbsPath(projectPth)
+	if err != nil {
+		t.Errorf("abs")
+	}
+
+	objects, projectID, err := open(absPth)
+
+	_, err = parseProj(projectID, objects)
+	if err != nil {
+		t.Errorf("setup parse proj, error: %s", err)
+	}
+
+	type args struct {
+		ref       fileReference
+		projectID string
+		objects   serialized.Object
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "dsf",
+			args: args{
+				ref: fileReference{
+					id: "01801EA51A32CA2A002B4718",
+				},
+				projectID: projectID,
+				objects:   objects,
+			},
+			want:    "",
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := resolveFileReferenceAbsolutePath(tt.args.ref, tt.args.projectID, tt.args.objects)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("resolveFileReferenceAbsolutePath() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("resolveFileReferenceAbsolutePath() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
