@@ -31,15 +31,17 @@ func AssetCatalogs(projectPth string) (TargetsToAssetCatalogs, error) {
 func assetCatalogs(targets []Target, objects serialized.Object) (TargetsToAssetCatalogs, error) {
 	targetToAssetCatalogs := map[string][]string{}
 	for _, target := range targets {
-		resourcesBuildPhase, err := filterResourcesBuildPhase(target.buildPhaseIDs, objects)
-		if err != nil {
-			return TargetsToAssetCatalogs{}, fmt.Errorf("getting resource build phases failed, error: %s", err)
+		if target.Type == NativeTargetType { // Ignoring PBXAggregateTarget and PBXLegacyTarget as may not contain build phase
+			resourcesBuildPhase, err := filterResourcesBuildPhase(target.buildPhaseIDs, objects)
+			if err != nil {
+				return TargetsToAssetCatalogs{}, fmt.Errorf("getting resource build phases failed, error: %s", err)
+			}
+			assetCatalogs, err := filterAssetCatalogs(resourcesBuildPhase, objects)
+			if err != nil {
+				return TargetsToAssetCatalogs{}, err
+			}
+			targetToAssetCatalogs[target.ID] = assetCatalogs
 		}
-		assetCatalogs, err := filterAssetCatalogs(resourcesBuildPhase, objects)
-		if err != nil {
-			return TargetsToAssetCatalogs{}, err
-		}
-		targetToAssetCatalogs[target.ID] = assetCatalogs
 	}
 	return targetToAssetCatalogs, nil
 }
