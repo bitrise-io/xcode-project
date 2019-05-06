@@ -54,61 +54,6 @@ func Test_assetCatalog(t *testing.T) {
 	}
 }
 
-func TestAppIconSets(t *testing.T) {
-	tests := []struct {
-		name       string
-		projectPth string
-		want       TargetsToAppIconSets
-		wantErr    bool
-	}{
-		// {
-		// 	name:       "dsfsd",
-		// 	projectPth: "/Users/lpusok/Develop/keybase-client/osx/Keybase.xcodeproj",
-		// 	want:       nil,
-		// 	wantErr:    false,
-		// },
-		{
-			name:       "OnionBrowser",
-			projectPth: "/Users/lpusok/Develop/_ios_github/OnionBrowser-2.X/OnionBrowser2.xcodeproj",
-			want:       nil,
-			wantErr:    false,
-		},
-
-		{
-			name:       "Keybase",
-			projectPth: "/Users/lpusok/Develop/keybase-client/shared/react-native/ios/Keybase.xcodeproj",
-			want:       nil,
-			wantErr:    false,
-		},
-
-		{
-			name:       "Telegraph",
-			projectPth: "/Users/lpusok/Develop/_ios_github/Telegram-public/Telegraph.xcodeproj",
-			want:       nil,
-			wantErr:    false,
-		},
-
-		{
-			name:       "Signal",
-			projectPth: "/Users/lpusok/Develop/_ios_github/Signal-iOS-master/Signal.xcodeproj",
-			want:       nil,
-			wantErr:    false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := AppIconSetPaths(tt.projectPth)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("AssetCatalogs() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("AssetCatalogs() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func Test_appIconSetPaths(t *testing.T) {
 	projectDir, err := ioutil.TempDir("", "ios-dummy-project")
 	if err != nil {

@@ -2,8 +2,9 @@ package xcodeproj
 
 import (
 	"fmt"
-	"os"
 	"path"
+	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/bitrise-io/go-utils/pathutil"
@@ -60,13 +61,14 @@ func appIconSetPaths(project Proj, projectPath string, objects serialized.Object
 
 		appIcons := []string{}
 		for _, appIconSetName := range iconTarget.appIconSetNames {
-			appIconSetPath, err := lookupAppIconPath(projectPath, assetCatalogs, appIconSetName, project.ID, objects)
+			appIconSetPaths, err := lookupAppIconPaths(projectPath, assetCatalogs, appIconSetName, project.ID, objects)
 			if err != nil {
 				return nil, err
-			} else if appIconSetPath == "" {
+			} else if len(appIconSetPaths) == 0 {
+				// continue
 				return nil, fmt.Errorf("not found app icon set (%s) on paths: %s", appIconSetName, assetCatalogs)
 			}
-			appIcons = append(appIcons, appIconSetPath)
+			appIcons = append(appIcons, appIconSetPaths...)
 		}
 		targetToAppIcons[iconTarget.target.ID] = appIcons
 	}
@@ -74,23 +76,28 @@ func appIconSetPaths(project Proj, projectPath string, objects serialized.Object
 	return targetToAppIcons, nil
 }
 
-func lookupAppIconPath(projectPath string, assetCatalogs []fileReference, appIconSetName string, projectID string, objects serialized.Object) (string, error) {
+func lookupAppIconPaths(projectPath string, assetCatalogs []fileReference, appIconSetName string, projectID string, objects serialized.Object) ([]string, error) {
 	for _, fileReference := range assetCatalogs {
 		resolvedPath, err := resolveObjectAbsolutePath(fileReference.id, projectID, projectPath, objects)
 		if err != nil {
-			return "", err
+			return nil, err
+		} else if resolvedPath == "" {
+			return nil, fmt.Errorf("could not resolve path")
 		}
 
-		possiblePath := path.Join(resolvedPath, appIconSetName+".appiconset")
-		if _, err := os.Stat(possiblePath); err != nil {
-			if !os.IsNotExist(err) {
-				return "", err
-			}
-			continue
+		wildcharAppIconSetName := appIconSetName
+		baseIconName := strings.Split(appIconSetName, "${")
+		if len(baseIconName) > 1 {
+			wildcharAppIconSetName = baseIconName[0] + "*"
 		}
-		return possiblePath, nil
+
+		matches, err := filepath.Glob(path.Join(regexp.QuoteMeta(resolvedPath), wildcharAppIconSetName+".appiconset"))
+		if err != nil {
+			return nil, err
+		}
+		return matches, nil
 	}
-	return "", nil
+	return nil, nil
 }
 
 func assetCatalogs(target Target, projectID string, objects serialized.Object) ([]fileReference, error) {
