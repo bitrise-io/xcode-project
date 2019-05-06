@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/bitrise-io/go-utils/sliceutil"
+
 	"github.com/bitrise-io/xcode-project/serialized"
 )
 
@@ -82,9 +84,8 @@ const (
 // PBXFileReference
 // 47C11A4921FF63970084FD7F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 type fileReference struct {
-	id         string
-	path       string
-	sourceTree sourceTree
+	id   string
+	path string
 }
 
 const fileReferenceElementType = "PBXFileReference"
@@ -115,27 +116,9 @@ func parseFileReference(id string, objects serialized.Object) (fileReference, er
 		return fileReference{}, err
 	}
 
-	sourceTreeRaw, err := rawFileReference.String("sourceTree")
-	if err != nil {
-		return fileReference{}, err
-	}
-
-	var sourceTree sourceTree
-	switch sourceTreeRaw {
-	case "<group>":
-		sourceTree = groupParent
-	case "<absolute>":
-		sourceTree = absoluteParentPath
-	case "":
-		sourceTree = undefinedParent
-	default:
-		sourceTree = unsupportedParent
-	}
-
 	return fileReference{
-		id:         id,
-		path:       path,
-		sourceTree: sourceTree,
+		id:   id,
+		path: path,
 	}, nil
 }
 
@@ -150,7 +133,11 @@ func parseFileReference(id string, objects serialized.Object) (fileReference, er
 // 	sourceTree = "<group>";
 // };
 
-func resolveFileReferenceAbsolutePath(fileReference fileReference, projectID string, objects serialized.Object) (string, error) {
+func resolveObjectAbsolutePath(targetID string, projectID string, projectPath string, objects serialized.Object) (string, error) {
+	_, err := objects.Object(targetID)
+	if err != nil {
+		return "", err
+	}
 	project, err := objects.Object(projectID)
 	if err != nil {
 		return "", err
@@ -169,20 +156,38 @@ func resolveFileReferenceAbsolutePath(fileReference fileReference, projectID str
 		return "", fmt.Errorf("key mainGroup not found, project: %s, error: %s", project, err)
 	}
 
-	fmt.Printf("dirPath: %s, root: %s, mainGroup: %s", projectDirPath, projectRoot, mainGroup)
-
-	resolvedPath, err := resolvePath(mainGroup, fileReference.id, path.Join(projectDirPath, projectRoot), objects, &[]string{projectID})
+	pathInProjectTree, err := findInProjectTree(targetID, mainGroup, objects, &[]string{})
 	if err != nil {
-		return "", fmt.Errorf("failed to resolve path, error: %s", err)
+		return "", fmt.Errorf("failed to find target ID in project, error: %s", err)
 	}
-	return resolvedPath, nil
+
+	pathInProjectTree = append(pathInProjectTree, projectEntry{
+		path:         path.Join(projectPath, "..", projectDirPath, projectRoot),
+		pathRelation: absoluteParentPath,
+	})
+
+	path, err := resolveFilePath(pathInProjectTree)
+	if err != nil {
+		return "", err
+	}
+	return path, nil
 }
 
-func resolvePath(id string, target string, parentPath string, objects serialized.Object, visited *[]string) (string, error) {
-	*visited = append(*visited, id)
-	entry, err := objects.Object(id)
+type projectEntry struct {
+	id           string
+	pathRelation sourceTree
+	path         string
+}
+
+func findInProjectTree(target string, currentID string, object serialized.Object, visited *[]string) ([]projectEntry, error) {
+	if sliceutil.IsStringInSlice(currentID, *visited) {
+		return nil, fmt.Errorf("circular reference in project, id: %s", currentID)
+	}
+	*visited = append(*visited, currentID)
+
+	entry, err := object.Object(currentID)
 	if err != nil {
-		return "", fmt.Errorf("object not found, id: %s, error: %s", id, err)
+		return nil, fmt.Errorf("object not found, id: %s, error: %s", currentID, err)
 	}
 
 	entryPath, err := entry.String("path")
@@ -190,48 +195,57 @@ func resolvePath(id string, target string, parentPath string, objects serialized
 	}
 	sourceTreeRaw, err := entry.String("sourceTree")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	var sourceTree sourceTree
+	var pathRelation sourceTree
 	switch sourceTreeRaw {
 	case "<group>":
-		sourceTree = groupParent
+		pathRelation = groupParent
 	case "<absolute>":
-		sourceTree = absoluteParentPath
+		pathRelation = absoluteParentPath
 	case "":
-		sourceTree = undefinedParent
+		pathRelation = undefinedParent
 	default:
-		sourceTree = unsupportedParent
+		pathRelation = unsupportedParent
 	}
 
-	var currentProjRelPath string
-	switch sourceTree {
-	case groupParent:
-		currentProjRelPath = path.Join(parentPath, entryPath)
-	case absoluteParentPath:
-		currentProjRelPath = entryPath
-	case undefinedParent:
-		currentProjRelPath = parentPath
-	case unsupportedParent:
-		return "", fmt.Errorf("failed to resolve path, unsupported relation: %s", sourceTreeRaw)
+	treeNode := projectEntry{
+		id:           currentID,
+		path:         entryPath,
+		pathRelation: pathRelation,
 	}
 
-	if id == target {
-		return currentProjRelPath, nil
+	if currentID == target {
+		return []projectEntry{treeNode}, nil
 	}
 
-	children, err := entry.StringSlice("children")
+	childIDs, err := entry.StringSlice("children")
 	if err != nil {
-		// return "", fmt.Errorf("key children not found, entry: %s, error: %s", entry, err)
-		return "", nil
+		return nil, nil
 	}
-	for _, child := range children {
-		resolvedPath, err := resolvePath(child, target, currentProjRelPath, objects, visited)
+	for _, childID := range childIDs {
+		pathInProjectTree, err := findInProjectTree(target, childID, object, visited)
 		if err != nil {
-			return "", err
-		} else if resolvedPath != "" {
-			return resolvedPath, nil
+			return nil, err
+		} else if pathInProjectTree != nil {
+			return append(pathInProjectTree, treeNode), nil
 		}
 	}
-	return "", nil
+	return nil, nil
+}
+
+func resolveFilePath(nodes []projectEntry) (string, error) {
+	var partialPath string
+	for _, entry := range nodes {
+		switch entry.pathRelation {
+		case groupParent:
+			partialPath = path.Join(entry.path, partialPath)
+		case absoluteParentPath:
+			return path.Join(entry.path, partialPath), nil
+		case undefinedParent:
+		case unsupportedParent:
+			return "", fmt.Errorf("failed to resolve path, unsupported path relation")
+		}
+	}
+	return partialPath, nil
 }
