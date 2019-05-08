@@ -13,10 +13,10 @@ import (
 	"github.com/bitrise-io/xcode-project/serialized"
 )
 
-// TargetsToAppIconSets maps target names to an array of asset catalog paths
+// TargetsToAppIconSets maps target names to an array app icon set absolute paths.
 type TargetsToAppIconSets map[string][]string
 
-// AppIconSetPaths parses an Xcode project and returns targets mapped to app icon set paths
+// AppIconSetPaths parses an Xcode project and returns targets mapped to app icon set absolute paths.
 func AppIconSetPaths(projectPath string) (TargetsToAppIconSets, error) {
 	absPth, err := pathutil.AbsPath(projectPath)
 	if err != nil {
