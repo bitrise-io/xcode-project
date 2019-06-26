@@ -1,8 +1,6 @@
 package xcodeproj
 
 import (
-	"fmt"
-
 	"github.com/bitrise-io/xcode-project/serialized"
 )
 
@@ -11,6 +9,7 @@ type Proj struct {
 	ID                     string
 	BuildConfigurationList ConfigurationList
 	Targets                []Target
+	Attributes             ProjectAtributes
 }
 
 func parseProj(id string, objects serialized.Object) (Proj, error) {
@@ -23,8 +22,6 @@ func parseProj(id string, objects serialized.Object) (Proj, error) {
 	if err != nil {
 		return Proj{}, err
 	}
-
-	fmt.Printf("%+v", projectAttributes)
 
 	buildConfigurationListID, err := rawPBXProj.String("buildConfigurationList")
 	if err != nil {
@@ -54,6 +51,7 @@ func parseProj(id string, objects serialized.Object) (Proj, error) {
 		ID:                     id,
 		BuildConfigurationList: buildConfigurationList,
 		Targets:                targets,
+		Attributes:             projectAttributes,
 	}, nil
 }
 
