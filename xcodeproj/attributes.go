@@ -44,10 +44,10 @@ func parseTargetAttributesMap(attributesObject serialized.Object) (map[string]Ta
 		}
 
 		var t TargetAttributes
-		t.CreatedOnToolsVersion, _ = obj.String("CreatedOnToolsVersion")
-		t.LastSwiftMigration, _ = obj.String("LastSwiftMigration")
-		t.DevelopmentTeam, _ = obj.String("DevelopmentTeam")
-		t.ProvisioningStyle, _ = obj.String("ProvisioningStyle")
+		t.CreatedOnToolsVersion, err = obj.String("CreatedOnToolsVersion")
+		t.LastSwiftMigration, err = obj.String("LastSwiftMigration")
+		t.DevelopmentTeam, err = obj.String("DevelopmentTeam")
+		t.ProvisioningStyle, err = obj.String("ProvisioningStyle")
 
 		targetAttributesMap[key] = t
 	}
