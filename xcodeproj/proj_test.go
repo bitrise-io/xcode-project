@@ -746,15 +746,12 @@ const expectedProj = `{
 		"TargetAttributes": {
 			"BA3CBE7419F7A93800CED4D5": {
 				"CreatedOnToolsVersion": "6.1",
-				"LastSwiftMigration": "",
 				"DevelopmentTeam": "72SA8V3WYL",
 				"ProvisioningStyle": "Manual"
 			},
 			"BA3CBE9019F7A93900CED4D5": {
 				"CreatedOnToolsVersion": "6.1",
-				"LastSwiftMigration": "",
-				"DevelopmentTeam": "",
-				"ProvisioningStyle": ""
+				"TestTargetID": "BA3CBE7419F7A93800CED4D5"
 			}
 		}
 	}
