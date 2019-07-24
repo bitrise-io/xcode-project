@@ -741,5 +741,18 @@ const expectedProj = `{
 			},
 			"ProductType": "com.apple.product-type.bundle.unit-test"
 		}
-	]
+	],
+	"Attributes": {
+		"TargetAttributes": {
+			"BA3CBE7419F7A93800CED4D5": {
+				"CreatedOnToolsVersion": "6.1",
+				"DevelopmentTeam": "72SA8V3WYL",
+				"ProvisioningStyle": "Manual"
+			},
+			"BA3CBE9019F7A93900CED4D5": {
+				"CreatedOnToolsVersion": "6.1",
+				"TestTargetID": "BA3CBE7419F7A93800CED4D5"
+			}
+		}
+	}
 }`
