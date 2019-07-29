@@ -76,11 +76,13 @@ func (t Target) IsExecutableProduct() bool {
 	return t.IsAppProduct() || t.IsAppExtensionProduct()
 }
 
-func (t Target) isTestProduct() bool {
+// IsTestProduct ...
+func (t Target) IsTestProduct() bool {
 	return filepath.Ext(t.ProductType) == ".unit-test"
 }
 
-func (t Target) isUITestProduct() bool {
+// IsUITestProduct ...
+func (t Target) IsUITestProduct() bool {
 	return filepath.Ext(t.ProductType) == ".ui-testing"
 }
 
