@@ -48,7 +48,7 @@ func (t Target) DependentExecutableProductTargets(includeUITest bool) []Target {
 	var targets []Target
 	for _, targetDependency := range t.Dependencies {
 		childTarget := targetDependency.Target
-		if !childTarget.IsExecutableProduct() && (!includeUITest || !childTarget.isUITestProduct()) {
+		if !childTarget.IsExecutableProduct() && (!includeUITest || !childTarget.IsUITestProduct()) {
 			continue
 		}
 
