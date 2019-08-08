@@ -228,6 +228,9 @@ func Open(pth string) (XcodeProj, error) {
 	}, nil
 }
 
+// open parse the provided .pbxprog file.
+// Returns the `raw` contents as a serialized.Object, the `objects` as serialized.Object and the PBXProject's `projectID` as string
+// If there was an error during the parsing it returns an error
 func open(absPth string) (rawPbxProj serialized.Object, objects serialized.Object, projectID string, err error) {
 	pbxProjPth := filepath.Join(absPth, "project.pbxproj")
 
