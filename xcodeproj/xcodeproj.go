@@ -3,6 +3,8 @@ package xcodeproj
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -20,6 +22,7 @@ import (
 type XcodeProj struct {
 	Proj    Proj
 	RawProj serialized.Object
+	Format  int
 
 	Name string
 	Path string
@@ -213,7 +216,7 @@ func Open(pth string) (XcodeProj, error) {
 		return XcodeProj{}, err
 	}
 
-	raw, objects, projectID, err := open(pth)
+	raw, objects, projectID, format, err := open(pth)
 
 	p, err := parseProj(projectID, objects)
 	if err != nil {
@@ -223,6 +226,7 @@ func Open(pth string) (XcodeProj, error) {
 	return XcodeProj{
 		Proj:    p,
 		RawProj: raw,
+		Format:  format,
 		Path:    absPth,
 		Name:    strings.TrimSuffix(filepath.Base(absPth), filepath.Ext(absPth)),
 	}, nil
@@ -231,7 +235,7 @@ func Open(pth string) (XcodeProj, error) {
 // open parse the provided .pbxprog file.
 // Returns the `raw` contents as a serialized.Object, the `objects` as serialized.Object and the PBXProject's `projectID` as string
 // If there was an error during the parsing it returns an error
-func open(absPth string) (rawPbxProj serialized.Object, objects serialized.Object, projectID string, err error) {
+func open(absPth string) (rawPbxProj serialized.Object, objects serialized.Object, projectID string, format int, err error) {
 	pbxProjPth := filepath.Join(absPth, "project.pbxproj")
 
 	var b []byte
@@ -240,14 +244,14 @@ func open(absPth string) (rawPbxProj serialized.Object, objects serialized.Objec
 		return
 	}
 
-	if _, err = plist.Unmarshal(b, &rawPbxProj); err != nil {
+	if format, err = plist.Unmarshal(b, &rawPbxProj); err != nil {
 		err = fmt.Errorf("failed to generate json from Pbxproj - error: %s", err)
 		return
 	}
 
 	objects, err = rawPbxProj.Object("objects")
 	if err != nil {
-		return serialized.Object{}, serialized.Object{}, "", err
+		return serialized.Object{}, serialized.Object{}, "", 0, err
 	}
 
 	for id := range objects {
@@ -274,4 +278,65 @@ func open(absPth string) (rawPbxProj serialized.Object, objects serialized.Objec
 // IsXcodeProj ...
 func IsXcodeProj(pth string) bool {
 	return filepath.Ext(pth) == ".xcodeproj"
+}
+
+// ForceCodeSign modifies the project's code signing settings to use manual code signing.
+//
+// Overrides the target's `ProvisioningStyle`, `DevelopmentTeam` and clears the `DevelopmentTeamName` in the **TargetAttributes**.
+// Overrides the target's `CODE_SIGN_STYLE`, `DEVELOPMENT_TEAM`, `CODE_SIGN_IDENTITY`, `CODE_SIGN_IDENTITY[sdk=iphoneos*]` `PROVISIONING_PROFILE_SPECIFIER`,
+// `PROVISIONING_PROFILE` and `PROVISIONING_PROFILE[sdk=iphoneos*]` in the **BuildSettings**.
+func (p *XcodeProj) ForceCodeSign(targetName, developmentTeam, codesignIdentity, provisioningProfileUUID string) error {
+	targetAttributes, err := p.TargetAttributes()
+	if err != nil {
+		return fmt.Errorf("failed to get project's target attributes, error: %s", err)
+	}
+
+	target, ok := p.Proj.TargetByName(targetName)
+	if !ok {
+		return fmt.Errorf("failed to find target with name: %s", targetName)
+	}
+
+	// Override TargetAttributes
+	_, err = foreceCodeSignOnTargetAttributes(targetAttributes, target.ID, developmentTeam, provisioningProfileUUID)
+	if err != nil {
+		return fmt.Errorf("failed to change code signing in target attributes, error: %s", err)
+	}
+
+	return nil
+}
+
+// foreceCodeSignOnTargetAttributes sets the TargetAttributes for the provided targetID.
+// Overrides the ProvisioningStyle, developmentTeam and clears the DevelopmentTeamName.
+func foreceCodeSignOnTargetAttributes(targetAttributes serialized.Object, targetID, developmentTeam, provisioningProfileUUID string) (serialized.Object, error) {
+	targetAttribute, err := targetAttributes.Object(targetID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get traget's (%s) attributes, error: %s", targetID, err)
+	}
+
+	targetAttribute["ProvisioningStyle"] = "Manual"
+	targetAttribute["DevelopmentTeam"] = developmentTeam
+	targetAttribute["DevelopmentTeamName"] = ""
+	return targetAttributes, nil
+}
+
+func foreceCodeSignOnBuildSettings() {
+	// TODO ...
+}
+
+// Save the XcodeProj
+//
+// Overrides the project.pbxproj file of the XcodeProj with the contents of `rawProj`
+func (p XcodeProj) Save() error {
+	return p.savePBXProj()
+}
+
+// savePBXProj overrides the project.pbxproj file of the XcodeProj with the contents of `rawProj`
+func (p XcodeProj) savePBXProj() error {
+	b, err := plist.Marshal(p.RawProj, p.Format)
+	if err != nil {
+		return fmt.Errorf("failed to marshal .pbxproj")
+	}
+
+	pth := path.Join(p.Path, "project.pbxproj")
+	return ioutil.WriteFile(pth, b, 0644)
 }

@@ -22,7 +22,7 @@ func AppIconSetPaths(projectPath string) (TargetsToAppIconSets, error) {
 		return TargetsToAppIconSets{}, err
 	}
 
-	_, objects, projectID, err := open(absPth)
+	_, objects, projectID, _, err := open(absPth)
 	proj, err := parseProj(projectID, objects)
 	if err != nil {
 		return TargetsToAppIconSets{}, err

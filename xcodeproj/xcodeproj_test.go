@@ -2,7 +2,10 @@ package xcodeproj
 
 import (
 	"path/filepath"
+	"reflect"
 	"testing"
+
+	"github.com/bitrise-io/xcode-project/pretty"
 
 	"github.com/bitrise-io/xcode-project/serialized"
 	"github.com/bitrise-io/xcode-project/testhelper"
@@ -92,7 +95,7 @@ func TestExpand(t *testing.T) {
 }
 
 func TestTargets(t *testing.T) {
-	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-samples/xcode-project-test.git")
+	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-io/xcode-project-test.git")
 	project, err := Open(filepath.Join(dir, "Group/SubProject/SubProject.xcodeproj"))
 	require.NoError(t, err)
 
@@ -159,7 +162,7 @@ func TestTargets(t *testing.T) {
 }
 
 func TestScheme(t *testing.T) {
-	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-samples/xcode-project-test.git")
+	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-io/xcode-project-test.git")
 	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
 	require.NoError(t, err)
 
@@ -193,7 +196,7 @@ func TestScheme(t *testing.T) {
 }
 
 func TestSchemes(t *testing.T) {
-	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-samples/xcode-project-test.git")
+	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-io/xcode-project-test.git")
 	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
 	require.NoError(t, err)
 
@@ -213,7 +216,7 @@ func TestSchemes(t *testing.T) {
 }
 
 func TestOpenXcodeproj(t *testing.T) {
-	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-samples/xcode-project-test.git")
+	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-io/xcode-project-test.git")
 	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
 	require.NoError(t, err)
 	require.Equal(t, filepath.Join(dir, "XcodeProj.xcodeproj"), project.Path)
@@ -223,4 +226,109 @@ func TestOpenXcodeproj(t *testing.T) {
 func TestIsXcodeProj(t *testing.T) {
 	require.True(t, IsXcodeProj("./BitriseSample.xcodeproj"))
 	require.False(t, IsXcodeProj("./BitriseSample.xcworkspace"))
+}
+
+func TestXcodeProj_forceCodeSign(t *testing.T) {
+	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-io/xcode-project-test.git")
+	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
+	if err != nil {
+		t.Fatalf("Failed to init project for test case, error: %s", err)
+	}
+	tests := []struct {
+		name                    string
+		developmentTeam         string
+		targetName              string
+		codeSignIdentity        string
+		provisioningProfileUUID string
+		wantErr                 bool
+	}{
+		{
+			name:                    "Force code sign - XcodeProj",
+			developmentTeam:         "72SA8V3WYL",
+			targetName:              "XcodeProj",
+			codeSignIdentity:        "",
+			provisioningProfileUUID: "",
+			wantErr:                 false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := project.ForceCodeSign(tt.targetName, tt.developmentTeam, tt.codeSignIdentity, tt.provisioningProfileUUID); (err != nil) != tt.wantErr {
+				t.Errorf("XcodeProj.forceCodeSign() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+
+	if err := project.Save(); err != nil {
+		t.Errorf("Failed to save project, error: %s", err)
+	}
+	t.Errorf("Project path: %s", project.Path)
+}
+
+func TestXcodeProj_foreceCodeSignOnTargetAttributes(t *testing.T) {
+	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-io/xcode-project-test.git")
+	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
+	if err != nil {
+		t.Fatalf("Failed to init project for test case, error: %s", err)
+	}
+	tests := []struct {
+		name                    string
+		targetAttributes        serialized.Object
+		developmentTeam         string
+		targetID                string
+		provisioningProfileUUID string
+		want                    serialized.Object
+		wantErr                 bool
+	}{
+		{
+			name: "Force code sign - XcodeProj",
+			targetAttributes: func() serialized.Object {
+				targetAttributes, err := project.TargetAttributes()
+				if err != nil {
+					t.Fatalf("Failed to fetch TargetAttributes for test case, error: %s", err)
+				}
+				return targetAttributes
+			}(),
+			developmentTeam:         "72SA8V3WYL",
+			targetID:                "7D5B35FB20E28EE80022BAE6",
+			provisioningProfileUUID: "",
+			want: map[string]interface{}{
+				"7D0342F020F4BA280050B6A6": map[string]interface{}{
+					"CreatedOnToolsVersion": "9.4.1",
+					"TestTargetID":          "7D5B35FB20E28EE80022BAE6",
+				},
+				"7D03430C20F4BB070050B6A6": map[string]interface{}{
+					"CreatedOnToolsVersion": "9.4.1",
+					"SystemCapabilities": map[string]interface{}{
+						"com.apple.Push": map[string]interface{}{
+							"enabled": "1",
+						},
+						"com.apple.iCloud": map[string]interface{}{
+							"enabled": "1",
+						},
+					},
+				},
+				"7D5B35FB20E28EE80022BAE6": map[string]interface{}{
+					"CreatedOnToolsVersion": "9.4.1",
+					"DevelopmentTeam":       "72SA8V3WYL",
+					"DevelopmentTeamName":   "",
+					"ProvisioningStyle":     "Manual",
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := foreceCodeSignOnTargetAttributes(tt.targetAttributes, tt.targetID, tt.developmentTeam, tt.provisioningProfileUUID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("XcodeProj.foreceCodeSignOnTargetAttributes() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("XcodeProj.foreceCodeSignOnTargetAttributes() got = %s, wantErr %s", pretty.Object(got), pretty.Object(tt.want))
+				return
+			}
+		})
+	}
 }
