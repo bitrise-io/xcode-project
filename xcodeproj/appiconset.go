@@ -7,9 +7,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/bitrise-io/go-utils/sliceutil"
-
 	"github.com/bitrise-io/go-utils/pathutil"
+	"github.com/bitrise-io/go-utils/sliceutil"
 	"github.com/bitrise-io/xcode-project/serialized"
 )
 
