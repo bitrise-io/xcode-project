@@ -18,7 +18,8 @@ import (
 
 // XcodeProj ...
 type XcodeProj struct {
-	Proj Proj
+	Proj    Proj
+	RawProj serialized.Object
 
 	Name string
 	Path string
@@ -212,7 +213,7 @@ func Open(pth string) (XcodeProj, error) {
 		return XcodeProj{}, err
 	}
 
-	objects, projectID, err := open(pth)
+	raw, objects, projectID, err := open(pth)
 
 	p, err := parseProj(projectID, objects)
 	if err != nil {
@@ -220,40 +221,43 @@ func Open(pth string) (XcodeProj, error) {
 	}
 
 	return XcodeProj{
-		Proj: p,
-		Path: absPth,
-		Name: strings.TrimSuffix(filepath.Base(absPth), filepath.Ext(absPth)),
+		Proj:    p,
+		RawProj: raw,
+		Path:    absPth,
+		Name:    strings.TrimSuffix(filepath.Base(absPth), filepath.Ext(absPth)),
 	}, nil
 }
 
-func open(absPth string) (serialized.Object, string, error) {
+func open(absPth string) (rawPbxProj serialized.Object, objects serialized.Object, projectID string, err error) {
 	pbxProjPth := filepath.Join(absPth, "project.pbxproj")
 
-	b, err := fileutil.ReadBytesFromFile(pbxProjPth)
+	var b []byte
+	b, err = fileutil.ReadBytesFromFile(pbxProjPth)
 	if err != nil {
-		return serialized.Object{}, "", err
+		return
 	}
 
-	var raw serialized.Object
-	if _, err := plist.Unmarshal(b, &raw); err != nil {
-		return serialized.Object{}, "", fmt.Errorf("failed to generate json from Pbxproj - error: %s", err)
+	if _, err = plist.Unmarshal(b, &rawPbxProj); err != nil {
+		err = fmt.Errorf("failed to generate json from Pbxproj - error: %s", err)
+		return
 	}
 
-	objects, err := raw.Object("objects")
+	objects, err = rawPbxProj.Object("objects")
 	if err != nil {
-		return serialized.Object{}, "", err
+		return serialized.Object{}, serialized.Object{}, "", err
 	}
 
-	projectID := ""
 	for id := range objects {
-		object, err := objects.Object(id)
+		var object serialized.Object
+		object, err = objects.Object(id)
 		if err != nil {
-			return serialized.Object{}, "", err
+			return
 		}
 
-		objectISA, err := object.String("isa")
+		var objectISA string
+		objectISA, err = object.String("isa")
 		if err != nil {
-			return serialized.Object{}, "", err
+			return
 		}
 
 		if objectISA == "PBXProject" {
@@ -261,7 +265,7 @@ func open(absPth string) (serialized.Object, string, error) {
 			break
 		}
 	}
-	return objects, projectID, nil
+	return
 }
 
 // IsXcodeProj ...
