@@ -170,11 +170,34 @@ func expand(bundleID string, buildSettings serialized.Object) (string, error) {
 	replacer := strings.NewReplacer("$", "", "(", "", ")", "", "{", "", "}", "")
 	envKey := strings.Split(replacer.Replace(rawEnvKey), ":")[0]
 
-	// Fetch the env value for the env key
-	envValue, err := buildSettings.String(envKey)
-	if err != nil {
-		return "", fmt.Errorf("%s build settings not found", envKey)
+	var envValue string
+	var removedChar int
+	for len(envKey) > 1 {
+		for settingsKey := range buildSettings {
+			fmt.Printf("envKey: %s\n", envKey)
+			if settingsKey == envKey {
+				envValue, err = buildSettings.String(envKey)
+				if err != nil {
+					return "", fmt.Errorf("%s build settings not found", envKey)
+				}
+				goto END
+			}
+
+		}
+		envKey = envKey[:len(envKey)-1]
+		removedChar++
 	}
+END:
+
+	if string(rawEnvKey[len(rawEnvKey)-1]) == ")" {
+		rawEnvKey = rawEnvKey[:len(rawEnvKey)-removedChar] + ")"
+	} else if string(rawEnvKey[len(rawEnvKey)-1]) == "}" {
+		rawEnvKey = rawEnvKey[:len(rawEnvKey)-removedChar] + "}"
+	} else {
+		rawEnvKey = rawEnvKey[:len(rawEnvKey)-removedChar]
+	}
+
+	// Fetch the env value for the env key
 	return strings.Replace(bundleID, rawEnvKey, envValue, -1), nil
 }
 
