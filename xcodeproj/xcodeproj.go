@@ -189,13 +189,15 @@ func expand(bundleID string, buildSettings serialized.Object) (string, error) {
 	}
 END:
 
-	if string(rawEnvKey[len(rawEnvKey)-1]) == ")" {
+	if string(rawEnvKey[len(rawEnvKey)-1]) == ")" && removedChar > 0 {
 		rawEnvKey = rawEnvKey[:len(rawEnvKey)-removedChar] + ")"
-	} else if string(rawEnvKey[len(rawEnvKey)-1]) == "}" {
+	} else if string(rawEnvKey[len(rawEnvKey)-1]) == "}" && removedChar > 0 {
 		rawEnvKey = rawEnvKey[:len(rawEnvKey)-removedChar] + "}"
 	} else {
 		rawEnvKey = rawEnvKey[:len(rawEnvKey)-removedChar]
 	}
+
+	fmt.Printf("rawEnvKey: %s", rawEnvKey)
 
 	// Fetch the env value for the env key
 	return strings.Replace(bundleID, rawEnvKey, envValue, -1), nil
