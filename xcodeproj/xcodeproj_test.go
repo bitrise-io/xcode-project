@@ -147,17 +147,6 @@ func TestResolve(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "auto_provision.ios-simple-objc.suffix.beta", resolved)
 	}
-
-	t.Log("resolves bundle id in format: prefix.$ENV_KEY.suffix")
-	{
-		bundleID := `auto_provision.$PRODUCT_NAME.suffix`
-		buildSettings := serialized.Object{
-			"PRODUCT_NAME": "ios-simple-objc",
-		}
-		resolved, err := Resolve(bundleID, buildSettings)
-		require.NoError(t, err)
-		require.Equal(t, "auto_provision.ios-simple-objc.suffix", resolved)
-	}
 }
 
 func TestExpand(t *testing.T) {
