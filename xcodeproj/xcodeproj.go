@@ -137,6 +137,7 @@ func Resolve(bundleID string, buildSettings serialized.Object) (string, error) {
 	for true {
 		var err error
 		resolved, err = expand(resolved, buildSettings)
+		fmt.Printf("\n\nresolved: %s\n\n", resolved)
 		if err != nil {
 			return "", err
 		}
@@ -156,36 +157,25 @@ func Resolve(bundleID string, buildSettings serialized.Object) (string, error) {
 
 func expand(bundleID string, buildSettings serialized.Object) (string, error) {
 	// Get the raw env key: $(PRODUCT_NAME:rfc1034identifier) || $(PRODUCT_NAME) || ${PRODUCT_NAME:rfc1034identifier} || ${PRODUCT_NAME}
-	r, err := regexp.Compile("[$][{(].+[)}]")
+	r, err := regexp.Compile("[$][{(][^$]+[)}]")
 	if err != nil {
 		return "", err
 	}
 	if !r.MatchString(bundleID) {
-		return "", fmt.Errorf("failed to match regex [$][{(].+[)}] to %s bundleID", bundleID)
+		return "", fmt.Errorf("failed to match regex [$][{(][^$]+[)}] to %s bundleID", bundleID)
 	}
-	replacer := strings.NewReplacer("$", "", "(", "", ")", "", "{", "", "}", "")
-	rawEnvKey := r.FindString(bundleID)
-	rawEnvKey = replacer.Replace(rawEnvKey)
 
-	envKey := strings.Split(rawEnvKey, ":")[0]
+	rawEnvKey := r.FindString(bundleID)
+
+	replacer := strings.NewReplacer("$", "", "(", "", ")", "", "{", "", "}", "")
+	envKey := strings.Split(replacer.Replace(rawEnvKey), ":")[0]
 
 	// Fetch the env value for the env key
 	envValue, err := buildSettings.String(envKey)
 	if err != nil {
-		return "", fmt.Errorf("failed to find enviroment variable value for key %s, error: %s", envKey, err)
+		return "", fmt.Errorf("%s build settings not found", envKey)
 	}
-
-	// Replace the envKey with the envValue and remove the special characters from the bundleID
-	replacer = strings.NewReplacer(
-		"$", "",
-		"(", "",
-		")", "",
-		"{", "",
-		"}", "",
-		":", "",
-		rawEnvKey, envValue,
-	)
-	return replacer.Replace(bundleID), nil
+	return strings.Replace(bundleID, rawEnvKey, envValue, -1), nil
 }
 
 // TargetBuildSettings ...

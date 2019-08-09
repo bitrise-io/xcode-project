@@ -124,40 +124,53 @@ func TestResolve(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "ios-simple-objc", resolved)
 	}
+
+	t.Log("resolves bundle id in format: prefix.$(ENV_KEY:rfc1034identifier).suffix.$(ENV_KEY:rfc1034identifier)")
+	{
+		bundleID := `auto_provision.$(PRODUCT_NAME:rfc1034identifier).suffix.$(PRODUCT_NAME:rfc1034identifier)`
+		buildSettings := serialized.Object{
+			"PRODUCT_NAME": "ios-simple-objc",
+		}
+		resolved, err := Resolve(bundleID, buildSettings)
+		require.NoError(t, err)
+		require.Equal(t, "auto_provision.ios-simple-objc.suffix.ios-simple-objc", resolved)
+	}
+
+	t.Log("resolves bundle id in format: prefix.$(ENV_KEY:rfc1034identifier).suffix.$(ENV_KEY_2:rfc1034identifier)")
+	{
+		bundleID := `auto_provision.$(PRODUCT_NAME:rfc1034identifier).suffix.$(VERSION:rfc1034identifier)`
+		buildSettings := serialized.Object{
+			"PRODUCT_NAME": "ios-simple-objc",
+			"VERSION":      "beta",
+		}
+		resolved, err := Resolve(bundleID, buildSettings)
+		require.NoError(t, err)
+		require.Equal(t, "auto_provision.ios-simple-objc.suffix.beta", resolved)
+	}
 }
 
 func TestExpand(t *testing.T) {
+
+	t.Log("resolves bundle id in format: prefix.$(ENV_KEY:rfc1034identifier).suffix.$(ENV_KEY:rfc1034identifier)")
+	{
+		bundleID := `auto_provision.$(PRODUCT_NAME:rfc1034identifier).suffix.$(PRODUCT_NAME:rfc1034identifier)`
+		buildSettings := serialized.Object{
+			"PRODUCT_NAME": "ios-simple-objc",
+		}
+		resolved, err := expand(bundleID, buildSettings)
+		require.NoError(t, err)
+		require.Equal(t, "auto_provision.ios-simple-objc.suffix.ios-simple-objc", resolved)
+	}
+
 	t.Log("resolves bundle id in format: prefix.$(ENV_KEY:rfc1034identifier).suffix")
 	{
-		bundleID := `auto_provision.$(PRODUCT_NAME:rfc1034identifier)`
+		bundleID := `auto_provision.$(PRODUCT_NAME:rfc1034identifier).suffix`
 		buildSettings := serialized.Object{
 			"PRODUCT_NAME": "ios-simple-objc",
 		}
 		resolved, err := expand(bundleID, buildSettings)
 		require.NoError(t, err)
-		require.Equal(t, "auto_provision.ios-simple-objc", resolved)
-	}
-
-	t.Log("works without env")
-	{
-		bundleID := `auto_provision.ios-simple-objc`
-		buildSettings := serialized.Object{
-			"PRODUCT_NAME": "ios-simple-objc",
-		}
-		resolved, err := expand(bundleID, buildSettings)
-		require.NoError(t, err)
-		require.Equal(t, "auto_provision.ios-simple-objc", resolved)
-	}
-
-	t.Log("fails if bundle id does not conforms to: (.*)\\$\\((.*)\\)(.*)")
-	{
-		bundleID := `auto_provision.$PRODUCT_NAME`
-		buildSettings := serialized.Object{
-			"PRODUCT_NAME": "ios-simple-objc",
-		}
-		resolved, err := expand(bundleID, buildSettings)
-		require.EqualError(t, err, "auto_provision.$PRODUCT_NAME does not match to pattern: (.*)\\$\\((.*)\\)(.*)")
-		require.Equal(t, "", resolved)
+		require.Equal(t, "auto_provision.ios-simple-objc.suffix", resolved)
 	}
 
 	t.Log("fails if env not found")
