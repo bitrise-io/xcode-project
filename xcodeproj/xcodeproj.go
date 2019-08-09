@@ -141,7 +141,6 @@ func Resolve(bundleID string, buildSettings serialized.Object) (string, error) {
 
 		var err error
 		resolved, err = expand(resolved, buildSettings)
-		fmt.Printf("\n\nresolved: %s\n\n", resolved)
 		if err != nil {
 			return "", err
 		}
@@ -193,8 +192,6 @@ func expand(bundleID string, buildSettings serialized.Object) (string, error) {
 	} else {
 		rawEnvKey = rawEnvKey[:len(rawEnvKey)-removedChar]
 	}
-
-	fmt.Printf("rawEnvKey: %s", rawEnvKey)
 
 	// Fetch the env value for the env key
 	return strings.Replace(bundleID, rawEnvKey, envValue, -1), nil
