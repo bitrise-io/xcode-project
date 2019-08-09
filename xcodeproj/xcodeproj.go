@@ -135,15 +135,15 @@ func Resolve(bundleID string, buildSettings serialized.Object) (string, error) {
 	resolvedBundleIDs := map[string]bool{}
 	resolved := bundleID
 	for true {
+		if !strings.Contains(resolved, "$") {
+			return resolved, nil
+		}
+
 		var err error
 		resolved, err = expand(resolved, buildSettings)
 		fmt.Printf("\n\nresolved: %s\n\n", resolved)
 		if err != nil {
 			return "", err
-		}
-
-		if !strings.Contains(resolved, "$") {
-			return resolved, nil
 		}
 
 		_, ok := resolvedBundleIDs[resolved]
