@@ -157,12 +157,12 @@ func Resolve(bundleID string, buildSettings serialized.Object) (string, error) {
 
 func expand(bundleID string, buildSettings serialized.Object) (string, error) {
 	// Get the raw env key: $(PRODUCT_NAME:rfc1034identifier) || $(PRODUCT_NAME) || ${PRODUCT_NAME:rfc1034identifier} || ${PRODUCT_NAME}
-	r, err := regexp.Compile("[$][{(][^$]+[)}]")
+	r, err := regexp.Compile("[$][{(]?[^.]+[)}]?")
 	if err != nil {
 		return "", err
 	}
 	if !r.MatchString(bundleID) {
-		return "", fmt.Errorf("failed to match regex [$][{(][^$]+[)}] to %s bundleID", bundleID)
+		return "", fmt.Errorf("failed to match regex [$][{(]?[^.]+[)}]? to %s bundleID", bundleID)
 	}
 
 	rawEnvKey := r.FindString(bundleID)
