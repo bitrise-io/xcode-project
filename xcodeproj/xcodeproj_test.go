@@ -11,13 +11,13 @@ import (
 )
 
 func TestResolve(t *testing.T) {
-	t.Log("resolves bundle id in format: prefix.$(ENV_KEY:rfc1034identifier).suffix")
+	t.Log("resolves bundle id in format: prefix.$(ENV_KEY:rfc1034identifier)")
 	{
 		bundleID := `auto_provision.$(PRODUCT_NAME:rfc1034identifier)`
 		buildSettings := serialized.Object{
 			"PRODUCT_NAME": "ios-simple-objc",
 		}
-		resolved, err := resolve(bundleID, buildSettings)
+		resolved, err := Resolve(bundleID, buildSettings)
 		require.NoError(t, err)
 		require.Equal(t, "auto_provision.ios-simple-objc", resolved)
 	}
@@ -29,7 +29,7 @@ func TestResolve(t *testing.T) {
 			"PRODUCT_NAME": "ios-simple-objc",
 			"BUNDLE_ID":    "$(PRODUCT_NAME:rfc1034identifier)",
 		}
-		resolved, err := resolve(bundleID, buildSettings)
+		resolved, err := Resolve(bundleID, buildSettings)
 		require.NoError(t, err)
 		require.Equal(t, "auto_provision.ios-simple-objc", resolved)
 	}
@@ -41,9 +41,88 @@ func TestResolve(t *testing.T) {
 			"PRODUCT_NAME": "$(BUNDLE_ID:rfc1034identifier)",
 			"BUNDLE_ID":    "$(PRODUCT_NAME:rfc1034identifier)",
 		}
-		resolved, err := resolve(bundleID, buildSettings)
+		resolved, err := Resolve(bundleID, buildSettings)
 		require.EqualError(t, err, "bundle id reference cycle found")
 		require.Equal(t, "", resolved)
+	}
+
+	t.Log("resolves bundle id in format: prefix.$(ENV_KEY:rfc1034identifier).suffix")
+	{
+		bundleID := `auto_provision.$(PRODUCT_NAME:rfc1034identifier).suffix`
+		buildSettings := serialized.Object{
+			"PRODUCT_NAME": "ios-simple-objc",
+		}
+		resolved, err := Resolve(bundleID, buildSettings)
+		require.NoError(t, err)
+		require.Equal(t, "auto_provision.ios-simple-objc.suffix", resolved)
+	}
+
+	t.Log("resolves bundle id in format: $(ENV_KEY:rfc1034identifier)")
+	{
+		bundleID := `$(PRODUCT_NAME:rfc1034identifier)`
+		buildSettings := serialized.Object{
+			"PRODUCT_NAME": "ios-simple-objc",
+		}
+		resolved, err := Resolve(bundleID, buildSettings)
+		require.NoError(t, err)
+		require.Equal(t, "ios-simple-objc", resolved)
+	}
+
+	t.Log("resolves bundle id in format: prefix.$(ENV_KEY:rfc1034identifier)")
+	{
+		bundleID := `auto_provision.$(PRODUCT_NAME:rfc1034identifier)`
+		buildSettings := serialized.Object{
+			"PRODUCT_NAME": "ios-simple-objc",
+		}
+		resolved, err := Resolve(bundleID, buildSettings)
+		require.NoError(t, err)
+		require.Equal(t, "auto_provision.ios-simple-objc", resolved)
+	}
+
+	t.Log("resolves bundle id with cross env reference")
+	{
+		bundleID := `auto_provision.$(BUNDLE_ID:rfc1034identifier)`
+		buildSettings := serialized.Object{
+			"PRODUCT_NAME": "ios-simple-objc",
+			"BUNDLE_ID":    "$(PRODUCT_NAME:rfc1034identifier)",
+		}
+		resolved, err := Resolve(bundleID, buildSettings)
+		require.NoError(t, err)
+		require.Equal(t, "auto_provision.ios-simple-objc", resolved)
+	}
+
+	t.Log("detects env refernce cycle")
+	{
+		bundleID := `auto_provision.${BUNDLE_ID:rfc1034identifier}`
+		buildSettings := serialized.Object{
+			"PRODUCT_NAME": "${BUNDLE_ID:rfc1034identifier}",
+			"BUNDLE_ID":    "${PRODUCT_NAME:rfc1034identifier}",
+		}
+		resolved, err := Resolve(bundleID, buildSettings)
+		require.EqualError(t, err, "bundle id reference cycle found")
+		require.Equal(t, "", resolved)
+	}
+
+	t.Log("resolves bundle id in format: prefix.${ENV_KEY:rfc1034identifier}.suffix")
+	{
+		bundleID := `auto_provision.${PRODUCT_NAME:rfc1034identifier}.suffix`
+		buildSettings := serialized.Object{
+			"PRODUCT_NAME": "ios-simple-objc",
+		}
+		resolved, err := Resolve(bundleID, buildSettings)
+		require.NoError(t, err)
+		require.Equal(t, "auto_provision.ios-simple-objc.suffix", resolved)
+	}
+
+	t.Log("resolves bundle id in format: ${ENV_KEY:rfc1034identifier}")
+	{
+		bundleID := `${PRODUCT_NAME:rfc1034identifier}`
+		buildSettings := serialized.Object{
+			"PRODUCT_NAME": "ios-simple-objc",
+		}
+		resolved, err := Resolve(bundleID, buildSettings)
+		require.NoError(t, err)
+		require.Equal(t, "ios-simple-objc", resolved)
 	}
 }
 
