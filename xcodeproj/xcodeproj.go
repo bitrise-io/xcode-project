@@ -172,18 +172,17 @@ func expand(bundleID string, buildSettings serialized.Object) (string, error) {
 	var envValue string
 	var removedChar int
 	for len(envKey) > 1 {
-		envValue, err = searchEnvInBuildSettings(envKey, buildSettings)
-		if err != nil {
-			return "", fmt.Errorf("%s build settings not found", envKey)
-		}
-		if envValue != "" {
+		var ok bool
+		envValue, ok = envInBuildSettings(envKey, buildSettings)
+		if ok {
 			break
 		}
+
 		envKey = envKey[:len(envKey)-1]
 		removedChar++
 	}
 
-	// Removes the suffix from the env key ( removes the removedChar count of char from the end of rawEnvKey)
+	// Removes the suffix from the rawEnv key ( removes the removedChar count of char from the end of rawEnvKey)
 	// Example $ENVsuffix => $ENV
 	if string(rawEnvKey[len(rawEnvKey)-1]) == ")" && removedChar > 0 {
 		rawEnvKey = rawEnvKey[:len(rawEnvKey)-removedChar] + ")"
@@ -197,12 +196,12 @@ func expand(bundleID string, buildSettings serialized.Object) (string, error) {
 	return strings.Replace(bundleID, rawEnvKey, envValue, -1), nil
 }
 
-func searchEnvInBuildSettings(envKey string, buildSettings serialized.Object) (string, error) {
+func envInBuildSettings(envKey string, buildSettings serialized.Object) (string, bool) {
 	envValue, err := buildSettings.String(envKey)
-	if err != nil && !serialized.IsKeyNotFoundError(err) {
-		return "", err
+	if err != nil {
+		return "", false
 	}
-	return envValue, nil
+	return envValue, true
 }
 
 // TargetBuildSettings ...
