@@ -125,7 +125,7 @@ func (p XcodeProj) TargetBundleID(target, configuration string) (string, error) 
 	return Resolve(bundleID, buildSettings)
 }
 
-// Resolve returns the resolved the bundleID. We need this, becaue the bundle ID is not exposed in the .pbxproj file ( raw ).
+// Resolve returns the resolved bundleID. We need this, becaue the bundleID is not exposed in the .pbxproj file ( raw ).
 // If the raw BundleID contains an environment variable we have to replace it.
 //
 //**Example:**
