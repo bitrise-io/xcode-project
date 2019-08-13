@@ -3,6 +3,8 @@ package xcodeproj
 import (
 	"fmt"
 
+	"github.com/bitrise-io/xcode-project/pretty"
+
 	"github.com/bitrise-io/xcode-project/serialized"
 )
 
@@ -53,7 +55,7 @@ func (p XcodeProj) BuildConfigurationList(targetID string) (serialized.Object, e
 		return nil, fmt.Errorf("failed to fetch target buildConfigurationList, the objects of the project are not found, error: %s", err)
 	}
 
-	object, err := objects.Object(p.Proj.ID)
+	object, err := objects.Object(targetID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch target buildConfigurationList, the project objects with ID (%s) is not found, error: %s", p.Proj.ID, err)
 	}
@@ -68,4 +70,31 @@ func (p XcodeProj) BuildConfigurationList(targetID string) (serialized.Object, e
 	}
 
 	return buildConfigurationList, nil
+}
+
+// BuildConfigurations ...
+func (p XcodeProj) BuildConfigurations(buildConfigurationList serialized.Object) ([]serialized.Object, error) {
+	buildConfigurationIDList, err := buildConfigurationList.StringSlice("buildConfigurations")
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch the buildConfigurations attributes of the the buildConfigurationList (%v), error: %s", buildConfigurationList, err)
+	}
+
+	var buildConfigurations []serialized.Object
+	for _, id := range buildConfigurationIDList {
+		objects, err := p.RawProj.Object("objects")
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch target buildConfigurationList, the objects of the project are not found, error: %s", err)
+		}
+
+		buildConfiguration, err := objects.Object(id)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch target buildConfiguration, the buildConfiguration objects with ID (%s) is not found, error: %s", id, err)
+		}
+		buildConfigurations = append(buildConfigurations, buildConfiguration)
+
+		fmt.Printf("buildConfiguration key: %s value: %s", id, pretty.Object(buildConfiguration))
+		panic("")
+	}
+
+	return buildConfigurations, nil
 }
