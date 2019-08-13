@@ -218,6 +218,7 @@ func TestResolve(t *testing.T) {
 
 func TestExpand(t *testing.T) {
 
+	// Complex env
 	t.Log("resolves bundle id in format: prefix.$(ENV_KEY:rfc1034identifier).suffix.$(ENV_KEY:rfc1034identifier)")
 	{
 		bundleID := `auto_provision.$(PRODUCT_NAME:rfc1034identifier).suffix.$(PRODUCT_NAME:rfc1034identifier)`
@@ -239,9 +240,56 @@ func TestExpand(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "auto_provision.ios-simple-objc.suffix", resolved)
 	}
+
+	// Simple env
+	t.Log("resolves bundle id in format: prefix.$ENV_KEY")
+	{
+		bundleID := `auto_provision.$PRODUCT_NAME`
+		buildSettings := serialized.Object{
+			"PRODUCT_NAME": "ios-simple-objc",
+		}
+		resolved, err := expand(bundleID, buildSettings)
+		require.NoError(t, err)
+		require.Equal(t, "auto_provision.ios-simple-objc", resolved)
+	}
+
+	t.Log("resolves bundle id in format: prefix.$ENV_KEYsuffix")
+	{
+		bundleID := `auto_provision.$PRODUCT_NAMEsuffix`
+		buildSettings := serialized.Object{
+			"PRODUCT_NAME": "ios-simple-objc",
+		}
+		resolved, err := expand(bundleID, buildSettings)
+		require.NoError(t, err)
+		require.Equal(t, "auto_provision.ios-simple-objcsuffix", resolved)
+	}
 }
 
-func Test_expandSimpleEnv(t *testing.T) {
+func TestExpandComplexEnv(t *testing.T) {
+	t.Log("resolves bundle id in format: prefix.$(ENV_KEY:rfc1034identifier).suffix.$(ENV_KEY:rfc1034identifier)")
+	{
+		bundleID := `auto_provision.$(PRODUCT_NAME:rfc1034identifier).suffix.$(PRODUCT_NAME:rfc1034identifier)`
+		buildSettings := serialized.Object{
+			"PRODUCT_NAME": "ios-simple-objc",
+		}
+		resolved, err := expandComplexEnv(bundleID, buildSettings)
+		require.NoError(t, err)
+		require.Equal(t, "auto_provision.ios-simple-objc.suffix.ios-simple-objc", resolved)
+	}
+
+	t.Log("resolves bundle id in format: prefix.$(ENV_KEY:rfc1034identifier).suffix")
+	{
+		bundleID := `auto_provision.$(PRODUCT_NAME:rfc1034identifier).suffix`
+		buildSettings := serialized.Object{
+			"PRODUCT_NAME": "ios-simple-objc",
+		}
+		resolved, err := expandComplexEnv(bundleID, buildSettings)
+		require.NoError(t, err)
+		require.Equal(t, "auto_provision.ios-simple-objc.suffix", resolved)
+	}
+}
+
+func TestExpandSimpleEnv(t *testing.T) {
 	t.Log("resolves bundle id in format: prefix.$ENV_KEY")
 	{
 		bundleID := `auto_provision.$PRODUCT_NAME`

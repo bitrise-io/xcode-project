@@ -157,15 +157,25 @@ func Resolve(bundleID string, buildSettings serialized.Object) (string, error) {
 }
 
 func expand(bundleID string, buildSettings serialized.Object) (string, error) {
-	// Get the raw env key: $(PRODUCT_NAME:rfc1034identifier) || $(PRODUCT_NAME) || ${PRODUCT_NAME:rfc1034identifier} || ${PRODUCT_NAME}
 	r, err := regexp.Compile("[$][{(][^$]*[)}]")
 	if err != nil {
 		return "", err
 	}
-	if !r.MatchString(bundleID) {
-		return expandSimpleEnv(bundleID, buildSettings)
+	if r.MatchString(bundleID) {
+		// envs like:  $(PRODUCT_NAME:rfc1034identifier) || $(PRODUCT_NAME) || ${PRODUCT_NAME:rfc1034identifier} || ${PRODUCT_NAME}
+		return expandComplexEnv(bundleID, buildSettings)
 	}
+	// envs like: $PRODUCT_NAME
+	return expandSimpleEnv(bundleID, buildSettings)
+}
 
+// expandComplexEnv expands the env with the "[$][{(][^$]*[)}]" regex
+// **Example:** `prefix.$(ENV_KEY:rfc1034identifier).suffix.$(ENV_KEY:rfc1034identifier)` **=>** `auto_provision.ios-simple-objc.suffix.ios-simple-objc`
+func expandComplexEnv(bundleID string, buildSettings serialized.Object) (string, error) {
+	r, err := regexp.Compile("[$][{(][^$]*[)}]")
+	if err != nil {
+		return "", err
+	}
 	rawEnvKey := r.FindString(bundleID)
 
 	replacer := strings.NewReplacer("$", "", "(", "", ")", "", "{", "", "}", "")
@@ -175,16 +185,11 @@ func expand(bundleID string, buildSettings serialized.Object) (string, error) {
 	if !ok {
 		return "", fmt.Errorf("failed to find env in build settings: %s", envKey)
 	}
-
-	fmt.Printf("\nenvKey: %s", envKey)
-	fmt.Printf("\nbundleID: %s", bundleID)
-	fmt.Printf("\nrawEnvKey before replaces: %s", rawEnvKey)
-	fmt.Printf("\nbundleID after replace: %s", strings.Replace(bundleID, rawEnvKey, envValue, -1))
-	// Fetch the env value for the env key
 	return strings.Replace(bundleID, rawEnvKey, envValue, -1), nil
-
 }
 
+// expandSimpleEnv expands the env with the "[$][^$]*" regex
+// **Example:** `prefix.$ENV_KEY.suffix.$ENV_KEY` **=>** `auto_provision.ios-simple-objc.suffix.ios-simple-objc`
 func expandSimpleEnv(bundleID string, buildSettings serialized.Object) (string, error) {
 	r, err := regexp.Compile("[$][^$]*")
 	if err != nil {
