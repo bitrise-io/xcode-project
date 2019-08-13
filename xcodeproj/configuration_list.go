@@ -93,7 +93,6 @@ func (p XcodeProj) BuildConfigurations(buildConfigurationList serialized.Object)
 		buildConfigurations = append(buildConfigurations, buildConfiguration)
 
 		fmt.Printf("buildConfiguration key: %s value: %s", id, pretty.Object(buildConfiguration))
-		panic("")
 	}
 
 	return buildConfigurations, nil
