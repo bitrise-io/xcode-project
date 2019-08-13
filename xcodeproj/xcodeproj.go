@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/bitrise-io/xcode-project/pretty"
+
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/pathutil"
 	"github.com/bitrise-io/xcode-project/serialized"
@@ -285,15 +287,36 @@ func IsXcodeProj(pth string) bool {
 // Overrides the target's `ProvisioningStyle`, `DevelopmentTeam` and clears the `DevelopmentTeamName` in the **TargetAttributes**.
 // Overrides the target's `CODE_SIGN_STYLE`, `DEVELOPMENT_TEAM`, `CODE_SIGN_IDENTITY`, `CODE_SIGN_IDENTITY[sdk=iphoneos*]` `PROVISIONING_PROFILE_SPECIFIER`,
 // `PROVISIONING_PROFILE` and `PROVISIONING_PROFILE[sdk=iphoneos*]` in the **BuildSettings**.
-func (p *XcodeProj) ForceCodeSign(targetName, developmentTeam, codesignIdentity, provisioningProfileUUID string) error {
+func (p *XcodeProj) ForceCodeSign(configuration, targetName, developmentTeam, codesignIdentity, provisioningProfileUUID string) error {
+	target, ok := p.Proj.TargetByName(targetName)
+	if !ok {
+		return fmt.Errorf("failed to find target with name: %s", targetName)
+	}
+
 	targetAttributes, err := p.TargetAttributes()
 	if err != nil {
 		return fmt.Errorf("failed to get project's target attributes, error: %s", err)
 	}
 
-	target, ok := p.Proj.TargetByName(targetName)
-	if !ok {
-		return fmt.Errorf("failed to find target with name: %s", targetName)
+	buildConfigurationList, err := p.BuildConfigurationList(target.ID)
+	if err != nil {
+		return fmt.Errorf("failed to get target's (%s) buildConfigurationList, error: %s", target.ID, err)
+	}
+	buildConfigurations, err := p.BuildConfigurations(buildConfigurationList)
+	if err != nil {
+		return fmt.Errorf("failed to get buildConfigurations of buildConfigurationList (%s), error: %s", pretty.Object(buildConfigurationList), err)
+	}
+
+	var buildConfiguration serialized.Object
+	for _, b := range buildConfigurations {
+		if b["name"] == configuration {
+			buildConfiguration = b
+			break
+		}
+	}
+
+	if buildConfiguration == nil {
+		return fmt.Errorf("failed to find buildConfiguration for configuration %s in the buildConfiguration list: %s", configuration, pretty.Object(buildConfigurations))
 	}
 
 	// Override TargetAttributes
@@ -302,7 +325,7 @@ func (p *XcodeProj) ForceCodeSign(targetName, developmentTeam, codesignIdentity,
 	}
 
 	// Override BuildSettings
-	if err = foreceCodeSignOnBuildSettings(target.ID, developmentTeam, provisioningProfileUUID); err != nil {
+	if err = foreceCodeSignOnBuildSettings(buildConfiguration, target.ID, developmentTeam, provisioningProfileUUID, codesignIdentity); err != nil {
 		return fmt.Errorf("failed to change code signing in build settings, error: %s", err)
 	}
 	return nil
@@ -322,7 +345,20 @@ func foreceCodeSignOnTargetAttributes(targetAttributes serialized.Object, target
 	return nil
 }
 
-func foreceCodeSignOnBuildSettings(targetID, developmentTeam, provisioningProfileUUID string) error {
+func foreceCodeSignOnBuildSettings(buildConfiguration serialized.Object, targetID, developmentTeam, provisioningProfileUUID, codesignIdentity string) error {
+	buildSettings, err := buildConfiguration.Object("buildSettings")
+	if err != nil {
+		return fmt.Errorf("failed to get buildSettings of buildConfiguration (%s), error: %s", pretty.Object(buildConfiguration), err)
+	}
+
+	buildSettings["CODE_SIGN_STYLE"] = "Manual"
+	buildSettings["DEVELOPMENT_TEAM"] = developmentTeam
+	buildSettings["CODE_SIGN_IDENTITY"] = codesignIdentity
+	buildSettings["CODE_SIGN_IDENTITY[sdk=iphoneos*]"] = codesignIdentity
+	buildSettings["PROVISIONING_PROFILE_SPECIFIER"] = ""
+	buildSettings["PROVISIONING_PROFILE"] = "provisioningProfileUUID"
+	buildSettings["PROVISIONING_PROFILE[sdk=iphoneos*]"] = "provisioningProfileUUID"
+
 	return nil
 }
 

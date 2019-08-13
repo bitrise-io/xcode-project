@@ -235,6 +235,7 @@ func TestXcodeProj_forceCodeSign(t *testing.T) {
 	}
 	tests := []struct {
 		name                    string
+		configuration           string
 		developmentTeam         string
 		targetName              string
 		codeSignIdentity        string
@@ -243,16 +244,17 @@ func TestXcodeProj_forceCodeSign(t *testing.T) {
 	}{
 		{
 			name:                    "Force code sign - XcodeProj",
+			configuration:           "Release",
 			developmentTeam:         "72SA8V3WYL",
 			targetName:              "XcodeProj",
-			codeSignIdentity:        "",
+			codeSignIdentity:        "iPhone Developer: Test",
 			provisioningProfileUUID: "",
 			wantErr:                 false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := project.ForceCodeSign(tt.targetName, tt.developmentTeam, tt.codeSignIdentity, tt.provisioningProfileUUID); (err != nil) != tt.wantErr {
+			if err := project.ForceCodeSign(tt.configuration, tt.targetName, tt.developmentTeam, tt.codeSignIdentity, tt.provisioningProfileUUID); (err != nil) != tt.wantErr {
 				t.Errorf("XcodeProj.forceCodeSign() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
