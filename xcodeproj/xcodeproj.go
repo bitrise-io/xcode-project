@@ -297,30 +297,33 @@ func (p *XcodeProj) ForceCodeSign(targetName, developmentTeam, codesignIdentity,
 	}
 
 	// Override TargetAttributes
-	_, err = foreceCodeSignOnTargetAttributes(targetAttributes, target.ID, developmentTeam, provisioningProfileUUID)
-	if err != nil {
+	if err = foreceCodeSignOnTargetAttributes(targetAttributes, target.ID, developmentTeam); err != nil {
 		return fmt.Errorf("failed to change code signing in target attributes, error: %s", err)
 	}
 
+	// Override BuildSettings
+	if err = foreceCodeSignOnBuildSettings(target.ID, developmentTeam, provisioningProfileUUID); err != nil {
+		return fmt.Errorf("failed to change code signing in build settings, error: %s", err)
+	}
 	return nil
 }
 
 // foreceCodeSignOnTargetAttributes sets the TargetAttributes for the provided targetID.
-// Overrides the ProvisioningStyle, developmentTeam and clears the DevelopmentTeamName.
-func foreceCodeSignOnTargetAttributes(targetAttributes serialized.Object, targetID, developmentTeam, provisioningProfileUUID string) (serialized.Object, error) {
+// **Overrides the ProvisioningStyle, developmentTeam and clears the DevelopmentTeamName in the provided `targetAttributes`!**
+func foreceCodeSignOnTargetAttributes(targetAttributes serialized.Object, targetID, developmentTeam string) error {
 	targetAttribute, err := targetAttributes.Object(targetID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get traget's (%s) attributes, error: %s", targetID, err)
+		return fmt.Errorf("failed to get traget's (%s) attributes, error: %s", targetID, err)
 	}
 
 	targetAttribute["ProvisioningStyle"] = "Manual"
 	targetAttribute["DevelopmentTeam"] = developmentTeam
 	targetAttribute["DevelopmentTeamName"] = ""
-	return targetAttributes, nil
+	return nil
 }
 
-func foreceCodeSignOnBuildSettings() {
-	// TODO ...
+func foreceCodeSignOnBuildSettings(targetID, developmentTeam, provisioningProfileUUID string) error {
+	return nil
 }
 
 // Save the XcodeProj

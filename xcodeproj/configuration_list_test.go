@@ -1,10 +1,13 @@
 package xcodeproj
 
 import (
+	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/bitrise-io/xcode-project/pretty"
 	"github.com/bitrise-io/xcode-project/serialized"
+	"github.com/bitrise-io/xcode-project/testhelper"
 	"github.com/stretchr/testify/require"
 	"howett.net/plist"
 )
@@ -109,3 +112,46 @@ const expectedConfigurationList = `{
 		}
 	]
 }`
+
+func TestXcodeProjBuildConfigurationList(t *testing.T) {
+	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-io/xcode-project-test.git")
+	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
+	if err != nil {
+		t.Fatalf("Failed to init project for test case, error: %s", err)
+	}
+	tests := []struct {
+		name     string
+		targetID string
+		want     map[string]interface{}
+		wantErr  bool
+	}{
+		{
+			name:     "Fetch xcode-project-test sample's buildConfigurations",
+			targetID: "7D5B35F720E28EE80022BAE6",
+			want: map[string]interface{}{
+				"buildConfigurations": []string{
+					"7D5B360C20E28EEA0022BAE6",
+					"7D5B360D20E28EEA0022BAE6",
+				},
+				"defaultConfigurationIsVisible": "0",
+				"defaultConfigurationName":      "Release",
+				"isa":                           "XCConfigurationList",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := project.BuildConfigurationList(tt.targetID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("XcodeProj.BuildConfigurations() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			slice, _ := got.StringSlice("buildConfigurations")
+			if !reflect.DeepEqual(slice, tt.want["buildConfigurations"]) {
+				t.Errorf("XcodeProj.BuildConfigurations() = %s, want %s", pretty.Object(got), pretty.Object(tt.want))
+			}
+		})
+	}
+}

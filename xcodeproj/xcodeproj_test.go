@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/bitrise-io/xcode-project/pretty"
-
 	"github.com/bitrise-io/xcode-project/serialized"
 	"github.com/bitrise-io/xcode-project/testhelper"
 	"github.com/stretchr/testify/require"
@@ -272,13 +271,12 @@ func TestXcodeProj_foreceCodeSignOnTargetAttributes(t *testing.T) {
 		t.Fatalf("Failed to init project for test case, error: %s", err)
 	}
 	tests := []struct {
-		name                    string
-		targetAttributes        serialized.Object
-		developmentTeam         string
-		targetID                string
-		provisioningProfileUUID string
-		want                    serialized.Object
-		wantErr                 bool
+		name             string
+		targetAttributes serialized.Object
+		developmentTeam  string
+		targetID         string
+		want             serialized.Object
+		wantErr          bool
 	}{
 		{
 			name: "Force code sign - XcodeProj",
@@ -289,9 +287,8 @@ func TestXcodeProj_foreceCodeSignOnTargetAttributes(t *testing.T) {
 				}
 				return targetAttributes
 			}(),
-			developmentTeam:         "72SA8V3WYL",
-			targetID:                "7D5B35FB20E28EE80022BAE6",
-			provisioningProfileUUID: "",
+			developmentTeam: "72SA8V3WYL",
+			targetID:        "7D5B35FB20E28EE80022BAE6",
 			want: map[string]interface{}{
 				"7D0342F020F4BA280050B6A6": map[string]interface{}{
 					"CreatedOnToolsVersion": "9.4.1",
@@ -320,13 +317,13 @@ func TestXcodeProj_foreceCodeSignOnTargetAttributes(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := foreceCodeSignOnTargetAttributes(tt.targetAttributes, tt.targetID, tt.developmentTeam, tt.provisioningProfileUUID)
+			err := foreceCodeSignOnTargetAttributes(tt.targetAttributes, tt.targetID, tt.developmentTeam)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("XcodeProj.foreceCodeSignOnTargetAttributes() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("XcodeProj.foreceCodeSignOnTargetAttributes() got = %s, wantErr %s", pretty.Object(got), pretty.Object(tt.want))
+			if !reflect.DeepEqual(tt.targetAttributes, tt.want) {
+				t.Errorf("XcodeProj.foreceCodeSignOnTargetAttributes() got = %s, wantErr %s", pretty.Object(tt.targetAttributes), pretty.Object(tt.want))
 				return
 			}
 		})
