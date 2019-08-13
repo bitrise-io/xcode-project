@@ -3,8 +3,6 @@ package xcodeproj
 import (
 	"fmt"
 
-	"github.com/bitrise-io/xcode-project/pretty"
-
 	"github.com/bitrise-io/xcode-project/serialized"
 )
 
@@ -83,17 +81,14 @@ func (p XcodeProj) BuildConfigurations(buildConfigurationList serialized.Object)
 	for _, id := range buildConfigurationIDList {
 		objects, err := p.RawProj.Object("objects")
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch target buildConfigurationList, the objects of the project are not found, error: %s", err)
+			return nil, fmt.Errorf("failed to fetch target buildConfigurations, the objects of the project are not found, error: %s", err)
 		}
 
 		buildConfiguration, err := objects.Object(id)
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch target buildConfiguration, the buildConfiguration objects with ID (%s) is not found, error: %s", id, err)
+			return nil, fmt.Errorf("failed to fetch target buildConfiguration objects with ID (%s), error: %s", id, err)
 		}
 		buildConfigurations = append(buildConfigurations, buildConfiguration)
-
-		fmt.Printf("buildConfiguration key: %s value: %s", id, pretty.Object(buildConfiguration))
 	}
-
 	return buildConfigurations, nil
 }
