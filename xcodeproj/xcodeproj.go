@@ -145,8 +145,6 @@ func Resolve(bundleID string, buildSettings serialized.Object) (string, error) {
 			return "", err
 		}
 
-		fmt.Printf("resolved: %s", resolved)
-
 		_, ok := resolvedBundleIDs[resolved]
 		if ok {
 			return "", fmt.Errorf("bundle id reference cycle found")
@@ -205,9 +203,7 @@ func expandSimpleEnv(bundleID string, buildSettings serialized.Object) (string, 
 	for len(envKey) > 1 {
 		var ok bool
 		envValue, ok = envInBuildSettings(strings.Replace(envKey, "$", "", 1), buildSettings)
-		fmt.Printf("\nenvKey: %s", envKey)
 		if ok {
-			fmt.Printf("\nenvValue: %s", envValue)
 			break
 		}
 
