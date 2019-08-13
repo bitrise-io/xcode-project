@@ -145,6 +145,8 @@ func Resolve(bundleID string, buildSettings serialized.Object) (string, error) {
 			return "", err
 		}
 
+		fmt.Printf("resolved: %s", resolved)
+
 		_, ok := resolvedBundleIDs[resolved]
 		if ok {
 			return "", fmt.Errorf("bundle id reference cycle found")
@@ -156,12 +158,12 @@ func Resolve(bundleID string, buildSettings serialized.Object) (string, error) {
 
 func expand(bundleID string, buildSettings serialized.Object) (string, error) {
 	// Get the raw env key: $(PRODUCT_NAME:rfc1034identifier) || $(PRODUCT_NAME) || ${PRODUCT_NAME:rfc1034identifier} || ${PRODUCT_NAME}
-	r, err := regexp.Compile("[$][{(]?[^.]+[)}]?")
+	r, err := regexp.Compile("[$][{(][^$]*[)}]")
 	if err != nil {
 		return "", err
 	}
 	if !r.MatchString(bundleID) {
-		return "", fmt.Errorf("failed to match regex [$][{(]?[^.]+[)}]? to %s bundleID", bundleID)
+		return expandSimpleEnv(bundleID, buildSettings)
 	}
 
 	rawEnvKey := r.FindString(bundleID)
@@ -169,31 +171,46 @@ func expand(bundleID string, buildSettings serialized.Object) (string, error) {
 	replacer := strings.NewReplacer("$", "", "(", "", ")", "", "{", "", "}", "")
 	envKey := strings.Split(replacer.Replace(rawEnvKey), ":")[0]
 
+	envValue, ok := envInBuildSettings(envKey, buildSettings)
+	if !ok {
+		return "", fmt.Errorf("failed to find env in build settings: %s", envKey)
+	}
+
+	fmt.Printf("\nenvKey: %s", envKey)
+	fmt.Printf("\nbundleID: %s", bundleID)
+	fmt.Printf("\nrawEnvKey before replaces: %s", rawEnvKey)
+	fmt.Printf("\nbundleID after replace: %s", strings.Replace(bundleID, rawEnvKey, envValue, -1))
+	// Fetch the env value for the env key
+	return strings.Replace(bundleID, rawEnvKey, envValue, -1), nil
+
+}
+
+func expandSimpleEnv(bundleID string, buildSettings serialized.Object) (string, error) {
+	r, err := regexp.Compile("[$][^$]*")
+	if err != nil {
+		return "", err
+	}
+	if !r.MatchString(bundleID) {
+		return "", fmt.Errorf("failed to match regex [$][^$]* for %s", bundleID)
+	}
+	envKey := r.FindString(bundleID)
+
 	var envValue string
 	var removedChar int
 	for len(envKey) > 1 {
 		var ok bool
-		envValue, ok = envInBuildSettings(envKey, buildSettings)
+		envValue, ok = envInBuildSettings(strings.Replace(envKey, "$", "", 1), buildSettings)
+		fmt.Printf("\nenvKey: %s", envKey)
 		if ok {
+			fmt.Printf("\nenvValue: %s", envValue)
 			break
 		}
 
 		envKey = envKey[:len(envKey)-1]
 		removedChar++
 	}
+	return strings.Replace(bundleID, envKey, envValue, -1), nil
 
-	// Removes the suffix from the rawEnv key ( removes the removedChar count of char from the end of rawEnvKey)
-	// Example $ENVsuffix => $ENV
-	if string(rawEnvKey[len(rawEnvKey)-1]) == ")" && removedChar > 0 {
-		rawEnvKey = rawEnvKey[:len(rawEnvKey)-removedChar] + ")"
-	} else if string(rawEnvKey[len(rawEnvKey)-1]) == "}" && removedChar > 0 {
-		rawEnvKey = rawEnvKey[:len(rawEnvKey)-removedChar] + "}"
-	} else {
-		rawEnvKey = rawEnvKey[:len(rawEnvKey)-removedChar]
-	}
-
-	// Fetch the env value for the env key
-	return strings.Replace(bundleID, rawEnvKey, envValue, -1), nil
 }
 
 func envInBuildSettings(envKey string, buildSettings serialized.Object) (string, bool) {
