@@ -1,4 +1,4 @@
-package xcworkspace
+package xcscheme
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 )
 
 func TestSchemeNotFoundError_Error(t *testing.T) {
-	err := SchemeNotFoundError{scheme: "Scheme", container: "Workspace"}
+	err := NotFoundError{Scheme: "Scheme", Container: "Workspace"}
 	want := "scheme Scheme not found in Workspace"
 	if err.Error() != want {
 		t.Errorf("SchemeNotFoundError.Error() = %v, want %v", err, want)
@@ -21,7 +21,7 @@ func TestIsSchemeNotFoundError(t *testing.T) {
 	}{
 		{
 			name: "SchemeNotFoundError",
-			err:  SchemeNotFoundError{scheme: "Scheme", container: "Workspace"},
+			err:  NotFoundError{Scheme: "Scheme", Container: "Workspace"},
 			want: true,
 		},
 		{
@@ -32,7 +32,7 @@ func TestIsSchemeNotFoundError(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := IsSchemeNotFoundError(tt.err); got != tt.want {
+			if got := IsNotFoundError(tt.err); got != tt.want {
 				t.Errorf("IsSchemeNotFoundError() = %v, want %v", got, tt.want)
 			}
 		})
