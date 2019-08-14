@@ -8,6 +8,7 @@ import (
 	"github.com/bitrise-io/xcode-project/pretty"
 	"github.com/bitrise-io/xcode-project/serialized"
 	"github.com/bitrise-io/xcode-project/testhelper"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"howett.net/plist"
 )
@@ -148,7 +149,10 @@ func TestXcodeProjBuildConfigurationList(t *testing.T) {
 				return
 			}
 
-			slice, _ := got.StringSlice("buildConfigurations")
+			slice, err := got.StringSlice("buildConfigurations")
+			if err != nil {
+				t.Errorf("failed to get buildConfigurations string slice for test case, error: %s", err)
+			}
 			if !reflect.DeepEqual(slice, tt.want["buildConfigurations"]) {
 				t.Errorf("XcodeProj.BuildConfigurations() = %s, want %s", pretty.Object(got), pretty.Object(tt.want))
 			}
@@ -171,14 +175,53 @@ func TestXcodeProjBuildConfigurations(t *testing.T) {
 	tests := []struct {
 		name                   string
 		buildConfigurationList serialized.Object
-		want                   map[string]interface{}
+		want                   []serialized.Object
 		wantErr                bool
 	}{
 		{
 			name:                   "Fetch xcode-project-test sample's buildConfigurations",
 			buildConfigurationList: buildConfigurationList,
-			want:                   nil,
-			wantErr:                false,
+			want: []serialized.Object{
+				serialized.Object{
+					"buildSettings": map[string]interface{}{
+						"ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES": "YES",
+						"ASSETCATALOG_COMPILER_APPICON_NAME":    "AppIcon",
+						"CODE_SIGN_STYLE":                       "Automatic",
+						"DEVELOPMENT_TEAM":                      "72SA8V3WYL",
+						"INFOPLIST_FILE":                        "XcodeProj/Info.plist",
+						"LD_RUNPATH_SEARCH_PATHS": []interface{}{
+							"$(inherited)",
+							"@executable_path/Frameworks",
+						},
+						"PRODUCT_BUNDLE_IDENTIFIER": "com.bitrise.XcodeProj",
+						"PRODUCT_NAME":              "$(TARGET_NAME)",
+						"SWIFT_VERSION":             "4.0",
+						"TARGETED_DEVICE_FAMILY":    "1,2",
+					},
+					"isa":  "XCBuildConfiguration",
+					"name": "Debug",
+				},
+				serialized.Object{
+					"buildSettings": map[string]interface{}{
+						"ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES": "YES",
+						"ASSETCATALOG_COMPILER_APPICON_NAME":    "AppIcon",
+						"CODE_SIGN_STYLE":                       "Automatic",
+						"DEVELOPMENT_TEAM":                      "72SA8V3WYL",
+						"INFOPLIST_FILE":                        "XcodeProj/Info.plist",
+						"LD_RUNPATH_SEARCH_PATHS": []interface{}{
+							"$(inherited)",
+							"@executable_path/Frameworks",
+						},
+						"PRODUCT_BUNDLE_IDENTIFIER": "com.bitrise.XcodeProj",
+						"PRODUCT_NAME":              "$(TARGET_NAME)",
+						"SWIFT_VERSION":             "4.0",
+						"TARGETED_DEVICE_FAMILY":    "1,2",
+					},
+					"isa":  "XCBuildConfiguration",
+					"name": "Release",
+				},
+			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
@@ -189,8 +232,9 @@ func TestXcodeProjBuildConfigurations(t *testing.T) {
 				t.Errorf("XcodeProj.BuildConfigurations() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("XcodeProj.BuildConfigurations() = %v, want %v", got, tt.want)
+			if !cmp.Equal(got, tt.want) {
+				t.Errorf("XcodeProj.BuildConfigurations() = %v, want %v", pretty.Object(got), pretty.Object(tt.want))
+				t.Logf("Diff %s", cmp.Diff(got, tt.want))
 			}
 		})
 	}

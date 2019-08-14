@@ -325,7 +325,7 @@ func (p *XcodeProj) ForceCodeSign(configuration, targetName, developmentTeam, co
 	}
 
 	// Override BuildSettings
-	if err = foreceCodeSignOnBuildSettings(buildConfiguration, target.ID, developmentTeam, provisioningProfileUUID, codesignIdentity); err != nil {
+	if err = foreceCodeSignOnBuildConfiguration(buildConfiguration, target.ID, developmentTeam, provisioningProfileUUID, codesignIdentity); err != nil {
 		return fmt.Errorf("failed to change code signing in build settings, error: %s", err)
 	}
 	return nil
@@ -345,7 +345,9 @@ func foreceCodeSignOnTargetAttributes(targetAttributes serialized.Object, target
 	return nil
 }
 
-func foreceCodeSignOnBuildSettings(buildConfiguration serialized.Object, targetID, developmentTeam, provisioningProfileUUID, codesignIdentity string) error {
+// foreceCodeSignOnBuildConfiguration sets the BuildSettings for the provided targetID.
+// **Overrides the CODE_SIGN_STYLE, DEVELOPMENT_TEAM, CODE_SIGN_IDENTITY, CODE_SIGN_IDENTITY[sdk=iphoneos\*], PROVISIONING_PROFILE, PROVISIONING_PROFILE[sdk=iphoneos\*] and clears the PROVISIONING_PROFILE_SPECIFIER in the provided `buildConfiguration`!**
+func foreceCodeSignOnBuildConfiguration(buildConfiguration serialized.Object, targetID, developmentTeam, provisioningProfileUUID, codesignIdentity string) error {
 	buildSettings, err := buildConfiguration.Object("buildSettings")
 	if err != nil {
 		return fmt.Errorf("failed to get buildSettings of buildConfiguration (%s), error: %s", pretty.Object(buildConfiguration), err)
