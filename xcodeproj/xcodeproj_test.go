@@ -4,9 +4,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/bitrise-tools/xcode-project/serialized"
-	"github.com/bitrise-tools/xcode-project/testhelper"
-	"github.com/bitrise-tools/xcode-project/xcscheme"
+	"github.com/bitrise-io/xcode-project/serialized"
+	"github.com/bitrise-io/xcode-project/testhelper"
+	"github.com/bitrise-io/xcode-project/xcscheme"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/unicode/norm"
 )
@@ -182,17 +182,19 @@ func TestScheme(t *testing.T) {
 	{
 		// Gdańsk represented in High Sierra
 		b := []byte{71, 100, 97, 197, 132, 115, 107}
-		scheme, ok := project.Scheme(string(b))
-		require.True(t, ok)
+		scheme, container, err := project.Scheme(string(b))
+		require.NoError(t, err)
 		require.Equal(t, norm.NFC.String(string(b)), norm.NFC.String(scheme.Name))
+		require.Equal(t, pth, container)
 	}
 
 	{
 		// Gdańsk represented in Mojave
 		b := []byte{71, 100, 97, 110, 204, 129, 115, 107}
-		scheme, ok := project.Scheme(string(b))
-		require.True(t, ok)
+		scheme, container, err := project.Scheme(string(b))
+		require.NoError(t, err)
 		require.Equal(t, norm.NFC.String(string(b)), norm.NFC.String(scheme.Name))
+		require.Equal(t, pth, container)
 	}
 }
 

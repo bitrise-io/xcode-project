@@ -4,8 +4,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/bitrise-tools/xcode-project/testhelper"
-	"github.com/bitrise-tools/xcode-project/xcscheme"
+	"github.com/bitrise-io/xcode-project/testhelper"
+	"github.com/bitrise-io/xcode-project/xcscheme"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/unicode/norm"
 )

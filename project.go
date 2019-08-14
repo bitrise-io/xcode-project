@@ -1,9 +1,9 @@
 package project
 
 import (
-	"github.com/bitrise-tools/xcode-project/xcodeproj"
-	"github.com/bitrise-tools/xcode-project/xcscheme"
-	"github.com/bitrise-tools/xcode-project/xcworkspace"
+	"github.com/bitrise-io/xcode-project/xcodeproj"
+	"github.com/bitrise-io/xcode-project/xcscheme"
+	"github.com/bitrise-io/xcode-project/xcworkspace"
 )
 
 // HasScheme represents a struct that implements Scheme.
