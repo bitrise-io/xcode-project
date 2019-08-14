@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/bitrise-io/xcode-project/testhelper"
+	"github.com/bitrise-io/xcode-project/xcscheme"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/unicode/norm"
 )
@@ -25,7 +26,7 @@ func TestScheme(t *testing.T) {
 		scheme, container, err := workspace.Scheme("Not Exist Scheme")
 		require.EqualError(t, err, "scheme Not Exist Scheme not found in XcodeProj")
 		require.Equal(t, "", container)
-		require.Equal(t, "", scheme.Name)
+		require.Equal(t, (*xcscheme.Scheme)(nil), scheme)
 	}
 
 	{

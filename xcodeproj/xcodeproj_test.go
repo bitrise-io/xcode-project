@@ -6,6 +6,7 @@ import (
 
 	"github.com/bitrise-io/xcode-project/serialized"
 	"github.com/bitrise-io/xcode-project/testhelper"
+	"github.com/bitrise-io/xcode-project/xcscheme"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/unicode/norm"
 )
@@ -160,35 +161,40 @@ func TestTargets(t *testing.T) {
 
 func TestScheme(t *testing.T) {
 	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-samples/xcode-project-test.git")
-	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
+	pth := filepath.Join(dir, "XcodeProj.xcodeproj")
+	project, err := Open(pth)
 	require.NoError(t, err)
 
 	{
-		scheme, ok := project.Scheme("ProjectTodayExtensionScheme")
-		require.True(t, ok)
+		scheme, container, err := project.Scheme("ProjectTodayExtensionScheme")
+		require.NoError(t, err)
 		require.Equal(t, "ProjectTodayExtensionScheme", scheme.Name)
+		require.Equal(t, pth, container)
 	}
 
 	{
-		scheme, ok := project.Scheme("NotExistScheme")
-		require.False(t, ok)
-		require.Equal(t, "", scheme.Name)
+		scheme, container, err := project.Scheme("NotExistScheme")
+		require.EqualError(t, err, "scheme NotExistScheme not found in XcodeProj")
+		require.Equal(t, (*xcscheme.Scheme)(nil), scheme)
+		require.Equal(t, "", container)
 	}
 
 	{
 		// Gdańsk represented in High Sierra
 		b := []byte{71, 100, 97, 197, 132, 115, 107}
-		scheme, ok := project.Scheme(string(b))
-		require.True(t, ok)
+		scheme, container, err := project.Scheme(string(b))
+		require.NoError(t, err)
 		require.Equal(t, norm.NFC.String(string(b)), norm.NFC.String(scheme.Name))
+		require.Equal(t, pth, container)
 	}
 
 	{
 		// Gdańsk represented in Mojave
 		b := []byte{71, 100, 97, 110, 204, 129, 115, 107}
-		scheme, ok := project.Scheme(string(b))
-		require.True(t, ok)
+		scheme, container, err := project.Scheme(string(b))
+		require.NoError(t, err)
 		require.Equal(t, norm.NFC.String(string(b)), norm.NFC.String(scheme.Name))
+		require.Equal(t, pth, container)
 	}
 }
 
