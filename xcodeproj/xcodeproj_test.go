@@ -13,6 +13,18 @@ import (
 
 func TestResolve(t *testing.T) {
 
+	t.Log("resolves bundle id in format: prefix.${ENV_KEY}.$ENV_KEY_2")
+	{
+		bundleID := `prefix.${PRODUCT_NAME}.$VERSION`
+		buildSettings := serialized.Object{
+			"PRODUCT_NAME": "ios-simple-objc",
+			"VERSION":      "beta",
+		}
+		resolved, err := Resolve(bundleID, buildSettings)
+		require.NoError(t, err)
+		require.Equal(t, "prefix.ios-simple-objc.beta", resolved)
+	}
+
 	t.Log("resolves bundle id in format: prefix.{text.${ENV_KEY}.text}")
 	{
 		bundleID := `prefix.{text.${PRODUCT_NAME}.text}`
