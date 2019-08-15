@@ -155,7 +155,7 @@ func Resolve(bundleID string, buildSettings serialized.Object) (string, error) {
 }
 
 func expand(bundleID string, buildSettings serialized.Object) (string, error) {
-	r, err := regexp.Compile("[$][{(][^$]*[)}]")
+	r, err := regexp.Compile("[$][{(][^$]*?[)}]")
 	if err != nil {
 		return "", err
 	}
@@ -167,10 +167,10 @@ func expand(bundleID string, buildSettings serialized.Object) (string, error) {
 	return expandSimpleEnv(bundleID, buildSettings)
 }
 
-// expandComplexEnv expands the env with the "[$][{(][^$]*[)}]" regex
+// expandComplexEnv expands the env with the "[$][{(][^$]*?[)}]" regex
 // **Example:** `prefix.$(ENV_KEY:rfc1034identifier).suffix.$(ENV_KEY:rfc1034identifier)` **=>** `auto_provision.ios-simple-objc.suffix.ios-simple-objc`
 func expandComplexEnv(bundleID string, buildSettings serialized.Object) (string, error) {
-	r, err := regexp.Compile("[$][{(][^$]*[)}]")
+	r, err := regexp.Compile("[$][{(][^$]*?[)}]")
 	if err != nil {
 		return "", err
 	}
@@ -199,7 +199,6 @@ func expandSimpleEnv(bundleID string, buildSettings serialized.Object) (string, 
 	envKey := r.FindString(bundleID)
 
 	var envValue string
-	var removedChar int
 	for len(envKey) > 1 {
 		var ok bool
 		envValue, ok = envInBuildSettings(strings.Replace(envKey, "$", "", 1), buildSettings)
@@ -208,7 +207,6 @@ func expandSimpleEnv(bundleID string, buildSettings serialized.Object) (string, 
 		}
 
 		envKey = envKey[:len(envKey)-1]
-		removedChar++
 	}
 	return strings.Replace(bundleID, envKey, envValue, -1), nil
 

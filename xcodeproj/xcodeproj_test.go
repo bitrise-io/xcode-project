@@ -12,6 +12,18 @@ import (
 )
 
 func TestResolve(t *testing.T) {
+
+	t.Log("resolves bundle id in format: prefix.{text.${ENV_KEY}.text}")
+	{
+		bundleID := `prefix.{text.${PRODUCT_NAME}.text}`
+		buildSettings := serialized.Object{
+			"PRODUCT_NAME": "ios-simple-objc",
+		}
+		resolved, err := Resolve(bundleID, buildSettings)
+		require.NoError(t, err)
+		require.Equal(t, "prefix.{text.ios-simple-objc.text}", resolved)
+	}
+
 	t.Log("resolves bundle id in format: prefix.$ENV_KEY")
 	{
 		bundleID := `auto_provision.$PRODUCT_NAME`
@@ -267,6 +279,17 @@ func TestExpand(t *testing.T) {
 }
 
 func TestExpandComplexEnv(t *testing.T) {
+	t.Log("resolves bundle id in format: prefix.{text.${ENV_KEY}.text}")
+	{
+		bundleID := `prefix.{text.${PRODUCT_NAME}.text}`
+		buildSettings := serialized.Object{
+			"PRODUCT_NAME": "ios-simple-objc",
+		}
+		resolved, err := expandComplexEnv(bundleID, buildSettings)
+		require.NoError(t, err)
+		require.Equal(t, "prefix.{text.ios-simple-objc.text}", resolved)
+	}
+
 	t.Log("resolves bundle id in format: prefix.$(ENV_KEY:rfc1034identifier).suffix.$(ENV_KEY:rfc1034identifier)")
 	{
 		bundleID := `auto_provision.$(PRODUCT_NAME:rfc1034identifier).suffix.$(PRODUCT_NAME:rfc1034identifier)`
