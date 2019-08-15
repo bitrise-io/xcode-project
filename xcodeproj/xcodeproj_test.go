@@ -526,7 +526,6 @@ func TestXcodeProj_forceCodeSign(t *testing.T) {
 	if err := project.Save(); err != nil {
 		t.Errorf("Failed to save project, error: %s", err)
 	}
-	t.Errorf("Project path: %s", project.Path)
 }
 
 func TestXcodeProj_foreceCodeSignOnTargetAttributes(t *testing.T) {
