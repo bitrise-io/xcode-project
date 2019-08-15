@@ -105,7 +105,7 @@ func (p XcodeProj) TargetBundleID(target, configuration string) (string, error) 
 	}
 
 	if bundleID != "" {
-		return resolve(bundleID, buildSettings)
+		return Resolve(bundleID, buildSettings)
 	}
 
 	informationPropertyList, err := p.TargetInformationPropertyList(target, configuration)
@@ -122,21 +122,27 @@ func (p XcodeProj) TargetBundleID(target, configuration string) (string, error) 
 		return "", errors.New("no PRODUCT_BUNDLE_IDENTIFIER build settings nor CFBundleIdentifier information property found")
 	}
 
-	return resolve(bundleID, buildSettings)
+	return Resolve(bundleID, buildSettings)
 }
 
-func resolve(bundleID string, buildSettings serialized.Object) (string, error) {
+// Resolve returns the resolved bundleID. We need this, becaue the bundleID is not exposed in the .pbxproj file ( raw ).
+// If the raw BundleID contains an environment variable we have to replace it.
+//
+//**Example:**
+//BundleID in the .pbxproj: Bitrise.Test.$(PRODUCT_NAME:rfc1034identifier).Suffix
+//BundleID after the env is expanded: Bitrise.Test.Sample.Suffix
+func Resolve(bundleID string, buildSettings serialized.Object) (string, error) {
 	resolvedBundleIDs := map[string]bool{}
 	resolved := bundleID
 	for true {
+		if !strings.Contains(resolved, "$") {
+			return resolved, nil
+		}
+
 		var err error
 		resolved, err = expand(resolved, buildSettings)
 		if err != nil {
 			return "", err
-		}
-
-		if !strings.Contains(resolved, "$") {
-			return resolved, nil
 		}
 
 		_, ok := resolvedBundleIDs[resolved]
@@ -149,33 +155,69 @@ func resolve(bundleID string, buildSettings serialized.Object) (string, error) {
 }
 
 func expand(bundleID string, buildSettings serialized.Object) (string, error) {
-	if !strings.Contains(bundleID, "$") {
-		return bundleID, nil
-	}
-
-	pattern := `(.*)\$\((.*)\)(.*)`
-	re := regexp.MustCompile(pattern)
-	match := re.FindStringSubmatch(bundleID)
-	if len(match) != 4 {
-		return "", fmt.Errorf("%s does not match to pattern: %s", bundleID, pattern)
-	}
-
-	prefix := match[1]
-	suffix := match[3]
-	envKey := match[2]
-
-	split := strings.Split(envKey, ":")
-	envKey = split[0]
-
-	envValue, err := buildSettings.String(envKey)
+	r, err := regexp.Compile("[$][{(][^$]*?[)}]")
 	if err != nil {
-		if serialized.IsKeyNotFoundError(err) {
-			return "", fmt.Errorf("%s build settings not found", envKey)
-		}
 		return "", err
 	}
+	if r.MatchString(bundleID) {
+		// envs like:  $(PRODUCT_NAME:rfc1034identifier) || $(PRODUCT_NAME) || ${PRODUCT_NAME:rfc1034identifier} || ${PRODUCT_NAME}
+		return expandComplexEnv(bundleID, buildSettings)
+	}
+	// envs like: $PRODUCT_NAME
+	return expandSimpleEnv(bundleID, buildSettings)
+}
 
-	return prefix + envValue + suffix, nil
+// expandComplexEnv expands the env with the "[$][{(][^$]*?[)}]" regex
+// **Example:** `prefix.$(ENV_KEY:rfc1034identifier).suffix.$(ENV_KEY:rfc1034identifier)` **=>** `auto_provision.ios-simple-objc.suffix.ios-simple-objc`
+func expandComplexEnv(bundleID string, buildSettings serialized.Object) (string, error) {
+	r, err := regexp.Compile("[$][{(][^$]*?[)}]")
+	if err != nil {
+		return "", err
+	}
+	rawEnvKey := r.FindString(bundleID)
+
+	replacer := strings.NewReplacer("$", "", "(", "", ")", "", "{", "", "}", "")
+	envKey := strings.Split(replacer.Replace(rawEnvKey), ":")[0]
+
+	envValue, ok := envInBuildSettings(envKey, buildSettings)
+	if !ok {
+		return "", fmt.Errorf("failed to find env in build settings: %s", envKey)
+	}
+	return strings.Replace(bundleID, rawEnvKey, envValue, -1), nil
+}
+
+// expandSimpleEnv expands the env with the "[$][^$]*" regex
+// **Example:** `prefix.$ENV_KEY.suffix.$ENV_KEY` **=>** `auto_provision.ios-simple-objc.suffix.ios-simple-objc`
+func expandSimpleEnv(bundleID string, buildSettings serialized.Object) (string, error) {
+	r, err := regexp.Compile("[$][^$]*")
+	if err != nil {
+		return "", err
+	}
+	if !r.MatchString(bundleID) {
+		return "", fmt.Errorf("failed to match regex [$][^$]* for %s", bundleID)
+	}
+	envKey := r.FindString(bundleID)
+
+	var envValue string
+	for len(envKey) > 1 {
+		var ok bool
+		envValue, ok = envInBuildSettings(strings.Replace(envKey, "$", "", 1), buildSettings)
+		if ok {
+			break
+		}
+
+		envKey = envKey[:len(envKey)-1]
+	}
+	return strings.Replace(bundleID, envKey, envValue, -1), nil
+
+}
+
+func envInBuildSettings(envKey string, buildSettings serialized.Object) (string, bool) {
+	envValue, err := buildSettings.String(envKey)
+	if err != nil {
+		return "", false
+	}
+	return envValue, true
 }
 
 // TargetBuildSettings ...
