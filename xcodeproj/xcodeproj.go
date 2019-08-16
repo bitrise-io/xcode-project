@@ -3,9 +3,13 @@ package xcodeproj
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/bitrise-io/xcode-project/pretty"
 
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/pathutil"
@@ -18,7 +22,9 @@ import (
 
 // XcodeProj ...
 type XcodeProj struct {
-	Proj Proj
+	Proj    Proj
+	RawProj serialized.Object
+	Format  int
 
 	Name string
 	Path string
@@ -254,7 +260,7 @@ func Open(pth string) (XcodeProj, error) {
 		return XcodeProj{}, err
 	}
 
-	objects, projectID, err := open(pth)
+	format, raw, objects, projectID, err := open(pth)
 
 	p, err := parseProj(projectID, objects)
 	if err != nil {
@@ -262,40 +268,47 @@ func Open(pth string) (XcodeProj, error) {
 	}
 
 	return XcodeProj{
-		Proj: p,
-		Path: absPth,
-		Name: strings.TrimSuffix(filepath.Base(absPth), filepath.Ext(absPth)),
+		Proj:    p,
+		RawProj: raw,
+		Format:  format,
+		Path:    absPth,
+		Name:    strings.TrimSuffix(filepath.Base(absPth), filepath.Ext(absPth)),
 	}, nil
 }
 
-func open(absPth string) (serialized.Object, string, error) {
+// open parse the provided .pbxprog file.
+// Returns the `raw` contents as a serialized.Object, the `objects` as serialized.Object and the PBXProject's `projectID` as string
+// If there was an error during the parsing it returns an error
+func open(absPth string) (format int, rawPbxProj serialized.Object, objects serialized.Object, projectID string, err error) {
 	pbxProjPth := filepath.Join(absPth, "project.pbxproj")
 
-	b, err := fileutil.ReadBytesFromFile(pbxProjPth)
+	var b []byte
+	b, err = fileutil.ReadBytesFromFile(pbxProjPth)
 	if err != nil {
-		return serialized.Object{}, "", err
+		return
 	}
 
-	var raw serialized.Object
-	if _, err := plist.Unmarshal(b, &raw); err != nil {
-		return serialized.Object{}, "", fmt.Errorf("failed to generate json from Pbxproj - error: %s", err)
+	if format, err = plist.Unmarshal(b, &rawPbxProj); err != nil {
+		err = fmt.Errorf("failed to generate json from Pbxproj - error: %s", err)
+		return
 	}
 
-	objects, err := raw.Object("objects")
+	objects, err = rawPbxProj.Object("objects")
 	if err != nil {
-		return serialized.Object{}, "", err
+		return
 	}
 
-	projectID := ""
 	for id := range objects {
-		object, err := objects.Object(id)
+		var object serialized.Object
+		object, err = objects.Object(id)
 		if err != nil {
-			return serialized.Object{}, "", err
+			return
 		}
 
-		objectISA, err := object.String("isa")
+		var objectISA string
+		objectISA, err = object.String("isa")
 		if err != nil {
-			return serialized.Object{}, "", err
+			return
 		}
 
 		if objectISA == "PBXProject" {
@@ -303,10 +316,110 @@ func open(absPth string) (serialized.Object, string, error) {
 			break
 		}
 	}
-	return objects, projectID, nil
+	return
 }
 
 // IsXcodeProj ...
 func IsXcodeProj(pth string) bool {
 	return filepath.Ext(pth) == ".xcodeproj"
+}
+
+// ForceCodeSign modifies the project's code signing settings to use manual code signing.
+//
+// Overrides the target's `ProvisioningStyle`, `DevelopmentTeam` and clears the `DevelopmentTeamName` in the **TargetAttributes**.
+// Overrides the target's `CODE_SIGN_STYLE`, `DEVELOPMENT_TEAM`, `CODE_SIGN_IDENTITY`, `CODE_SIGN_IDENTITY[sdk=iphoneos*]` `PROVISIONING_PROFILE_SPECIFIER`,
+// `PROVISIONING_PROFILE` and `PROVISIONING_PROFILE[sdk=iphoneos*]` in the **BuildSettings**.
+func (p *XcodeProj) ForceCodeSign(configuration, targetName, developmentTeam, codesignIdentity, provisioningProfileUUID string) error {
+	target, ok := p.Proj.TargetByName(targetName)
+	if !ok {
+		return fmt.Errorf("failed to find target with name: %s", targetName)
+	}
+
+	targetAttributes, err := p.TargetAttributes()
+	if err != nil {
+		return fmt.Errorf("failed to get project's target attributes, error: %s", err)
+	}
+
+	buildConfigurationList, err := p.BuildConfigurationList(target.ID)
+	if err != nil {
+		return fmt.Errorf("failed to get target's (%s) buildConfigurationList, error: %s", target.ID, err)
+	}
+	buildConfigurations, err := p.BuildConfigurations(buildConfigurationList)
+	if err != nil {
+		return fmt.Errorf("failed to get buildConfigurations of buildConfigurationList (%s), error: %s", pretty.Object(buildConfigurationList), err)
+	}
+
+	var buildConfiguration serialized.Object
+	for _, b := range buildConfigurations {
+		if b["name"] == configuration {
+			buildConfiguration = b
+			break
+		}
+	}
+
+	if buildConfiguration == nil {
+		return fmt.Errorf("failed to find buildConfiguration for configuration %s in the buildConfiguration list: %s", configuration, pretty.Object(buildConfigurations))
+	}
+
+	// Override TargetAttributes
+	if err = foreceCodeSignOnTargetAttributes(targetAttributes, target.ID, developmentTeam); err != nil {
+		return fmt.Errorf("failed to change code signing in target attributes, error: %s", err)
+	}
+
+	// Override BuildSettings
+	if err = foreceCodeSignOnBuildConfiguration(buildConfiguration, target.ID, developmentTeam, provisioningProfileUUID, codesignIdentity); err != nil {
+		return fmt.Errorf("failed to change code signing in build settings, error: %s", err)
+	}
+	return nil
+}
+
+// foreceCodeSignOnTargetAttributes sets the TargetAttributes for the provided targetID.
+// **Overrides the ProvisioningStyle, developmentTeam and clears the DevelopmentTeamName in the provided `targetAttributes`!**
+func foreceCodeSignOnTargetAttributes(targetAttributes serialized.Object, targetID, developmentTeam string) error {
+	targetAttribute, err := targetAttributes.Object(targetID)
+	if err != nil {
+		return fmt.Errorf("failed to get traget's (%s) attributes, error: %s", targetID, err)
+	}
+
+	targetAttribute["ProvisioningStyle"] = "Manual"
+	targetAttribute["DevelopmentTeam"] = developmentTeam
+	targetAttribute["DevelopmentTeamName"] = ""
+	return nil
+}
+
+// foreceCodeSignOnBuildConfiguration sets the BuildSettings for the provided targetID.
+// **Overrides the CODE_SIGN_STYLE, DEVELOPMENT_TEAM, CODE_SIGN_IDENTITY, CODE_SIGN_IDENTITY[sdk=iphoneos\*], PROVISIONING_PROFILE, PROVISIONING_PROFILE[sdk=iphoneos\*] and clears the PROVISIONING_PROFILE_SPECIFIER in the provided `buildConfiguration`!**
+func foreceCodeSignOnBuildConfiguration(buildConfiguration serialized.Object, targetID, developmentTeam, provisioningProfileUUID, codesignIdentity string) error {
+	buildSettings, err := buildConfiguration.Object("buildSettings")
+	if err != nil {
+		return fmt.Errorf("failed to get buildSettings of buildConfiguration (%s), error: %s", pretty.Object(buildConfiguration), err)
+	}
+
+	buildSettings["CODE_SIGN_STYLE"] = "Manual"
+	buildSettings["DEVELOPMENT_TEAM"] = developmentTeam
+	buildSettings["CODE_SIGN_IDENTITY"] = codesignIdentity
+	buildSettings["CODE_SIGN_IDENTITY[sdk=iphoneos*]"] = codesignIdentity
+	buildSettings["PROVISIONING_PROFILE_SPECIFIER"] = ""
+	buildSettings["PROVISIONING_PROFILE"] = "provisioningProfileUUID"
+	buildSettings["PROVISIONING_PROFILE[sdk=iphoneos*]"] = "provisioningProfileUUID"
+
+	return nil
+}
+
+// Save the XcodeProj
+//
+// Overrides the project.pbxproj file of the XcodeProj with the contents of `rawProj`
+func (p XcodeProj) Save() error {
+	return p.savePBXProj()
+}
+
+// savePBXProj overrides the project.pbxproj file of the XcodeProj with the contents of `rawProj`
+func (p XcodeProj) savePBXProj() error {
+	b, err := plist.Marshal(p.RawProj, p.Format)
+	if err != nil {
+		return fmt.Errorf("failed to marshal .pbxproj")
+	}
+
+	pth := path.Join(p.Path, "project.pbxproj")
+	return ioutil.WriteFile(pth, b, 0644)
 }
