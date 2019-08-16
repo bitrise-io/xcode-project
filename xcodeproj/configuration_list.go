@@ -62,12 +62,7 @@ func (p XcodeProj) BuildConfigurationList(targetID string) (serialized.Object, e
 		return nil, fmt.Errorf("failed to fetch target's (%s) buildConfigurationList, error: %s", targetID, err)
 	}
 
-	buildConfigurationList, err := objects.Object(buildConfigurationListID)
-	if err != nil {
-		return nil, err
-	}
-
-	return buildConfigurationList, nil
+	return objects.Object(buildConfigurationListID)
 }
 
 // BuildConfigurations ...

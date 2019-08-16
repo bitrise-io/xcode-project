@@ -260,7 +260,7 @@ func Open(pth string) (XcodeProj, error) {
 		return XcodeProj{}, err
 	}
 
-	raw, objects, projectID, format, err := open(pth)
+	format, raw, objects, projectID, err := open(pth)
 
 	p, err := parseProj(projectID, objects)
 	if err != nil {
@@ -279,7 +279,7 @@ func Open(pth string) (XcodeProj, error) {
 // open parse the provided .pbxprog file.
 // Returns the `raw` contents as a serialized.Object, the `objects` as serialized.Object and the PBXProject's `projectID` as string
 // If there was an error during the parsing it returns an error
-func open(absPth string) (rawPbxProj serialized.Object, objects serialized.Object, projectID string, format int, err error) {
+func open(absPth string) (format int, rawPbxProj serialized.Object, objects serialized.Object, projectID string, err error) {
 	pbxProjPth := filepath.Join(absPth, "project.pbxproj")
 
 	var b []byte
@@ -295,7 +295,7 @@ func open(absPth string) (rawPbxProj serialized.Object, objects serialized.Objec
 
 	objects, err = rawPbxProj.Object("objects")
 	if err != nil {
-		return serialized.Object{}, serialized.Object{}, "", 0, err
+		return
 	}
 
 	for id := range objects {
