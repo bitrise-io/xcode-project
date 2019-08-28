@@ -241,6 +241,36 @@ func TestResolve(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "auto_provision.ios-simple-objc.suffix", resolved)
 	}
+	t.Log("resolves bundle id in format: prefix.second.${ENV_KEY}.suffix")
+	{
+		bundleID := `prefix.second.${PRODUCT_NAME}.suffix`
+		buildSettings := serialized.Object{
+			"PRODUCT_NAME": "ios-simple-objc",
+		}
+		resolved, err := Resolve(bundleID, buildSettings)
+		require.NoError(t, err)
+		require.Equal(t, "prefix.second.ios-simple-objc.suffix", resolved)
+	}
+	t.Log("resolves bundle id in format: prefix.second.third.${ENV_KEY}")
+	{
+		bundleID := `prefix.second.third.${PRODUCT_NAME}`
+		buildSettings := serialized.Object{
+			"PRODUCT_NAME": "ios-simple-objc",
+		}
+		resolved, err := Resolve(bundleID, buildSettings)
+		require.NoError(t, err)
+		require.Equal(t, "prefix.second.third.ios-simple-objc", resolved)
+	}
+	t.Log("resolves bundle id in format: prefix.second.third.fourth.${ENV_KEY}")
+	{
+		bundleID := `prefix.second.third.fourth.${PRODUCT_NAME}`
+		buildSettings := serialized.Object{
+			"PRODUCT_NAME": "ios-simple-objc",
+		}
+		resolved, err := Resolve(bundleID, buildSettings)
+		require.NoError(t, err)
+		require.Equal(t, "prefix.second.third.fourth.ios-simple-objc", resolved)
+	}
 }
 
 func TestExpand(t *testing.T) {
