@@ -507,7 +507,15 @@ func TestSchemes(t *testing.T) {
 	require.Equal(t, "ProjectScheme", schemes[1].Name)
 }
 
-func TestOpenXcodeproj(t *testing.T) {
+func TestOpenXcodeproj1(t *testing.T) {
+	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-io/sample-apps-ios-workspace-swift.git")
+	project, err := Open(filepath.Join(dir, "Pods", "Pods.xcodeproj"))
+	require.NoError(t, err)
+	require.Equal(t, filepath.Join(dir, "Pods", "Pods.xcodeproj"), project.Path)
+	require.Equal(t, "Pods", project.Name)
+}
+
+func TestOpenXcodeproj2(t *testing.T) {
 	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-io/xcode-project-test.git")
 	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
 	require.NoError(t, err)
