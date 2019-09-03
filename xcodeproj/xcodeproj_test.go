@@ -508,11 +508,22 @@ func TestSchemes(t *testing.T) {
 }
 
 func TestOpenXcodeproj(t *testing.T) {
-	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-io/xcode-project-test.git")
-	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
-	require.NoError(t, err)
-	require.Equal(t, filepath.Join(dir, "XcodeProj.xcodeproj"), project.Path)
-	require.Equal(t, "XcodeProj", project.Name)
+	t.Log("Opening Pods.xcodeproj in sample-apps-ios-workspace-swift.git")
+	{
+		dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-io/sample-apps-ios-workspace-swift.git")
+		project, err := Open(filepath.Join(dir, "Pods", "Pods.xcodeproj"))
+		require.NoError(t, err)
+		require.Equal(t, filepath.Join(dir, "Pods", "Pods.xcodeproj"), project.Path)
+		require.Equal(t, "Pods", project.Name)
+	}
+	t.Log("Opening XcodeProj.xcodeproj in xcode-project-test.git")
+	{
+		dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-io/xcode-project-test.git")
+		project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
+		require.NoError(t, err)
+		require.Equal(t, filepath.Join(dir, "XcodeProj.xcodeproj"), project.Path)
+		require.Equal(t, "XcodeProj", project.Name)
+	}
 }
 
 func TestIsXcodeProj(t *testing.T) {
