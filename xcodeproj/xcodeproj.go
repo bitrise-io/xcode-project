@@ -403,8 +403,8 @@ func foreceCodeSignOnBuildConfiguration(buildConfiguration serialized.Object, ta
 	buildSettings["CODE_SIGN_IDENTITY"] = codesignIdentity
 	buildSettings["CODE_SIGN_IDENTITY[sdk=iphoneos*]"] = codesignIdentity
 	buildSettings["PROVISIONING_PROFILE_SPECIFIER"] = ""
-	buildSettings["PROVISIONING_PROFILE"] = "provisioningProfileUUID"
-	buildSettings["PROVISIONING_PROFILE[sdk=iphoneos*]"] = "provisioningProfileUUID"
+	buildSettings["PROVISIONING_PROFILE"] = provisioningProfileUUID
+	buildSettings["PROVISIONING_PROFILE[sdk=iphoneos*]"] = provisioningProfileUUID
 
 	return nil
 }
