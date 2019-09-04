@@ -25,7 +25,6 @@ func TestParseProj(t *testing.T) {
 	{
 		proj, err := parseProj("INVALID_TARGET_ID", raw)
 		require.Error(t, err)
-		// fmt.Printf("proj:\n%s\n", pretty.Object(proj))
 		require.Equal(t, Proj{}, proj)
 	}
 }

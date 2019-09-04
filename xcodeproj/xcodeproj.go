@@ -261,6 +261,9 @@ func Open(pth string) (XcodeProj, error) {
 	}
 
 	format, raw, objects, projectID, err := open(pth)
+	if err != nil {
+		return XcodeProj{}, err
+	}
 
 	p, err := parseProj(projectID, objects)
 	if err != nil {
