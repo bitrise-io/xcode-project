@@ -53,6 +53,37 @@ func (p XcodeProj) TargetCodeSignEntitlementsPath(target, configuration string) 
 	return p.buildSettingsFilePath(target, configuration, "CODE_SIGN_ENTITLEMENTS")
 }
 
+func (p XcodeProj) ForceTargetCodeSignEntitlement(target, configuration, entitlement string, value interface{}) error {
+	codeSignEntitlementsPth, err := p.TargetCodeSignEntitlementsPath(target, configuration)
+	if err != nil {
+		return err
+	}
+
+	codeSignEntitlementsContent, err := fileutil.ReadBytesFromFile(codeSignEntitlementsPth)
+	if err != nil {
+		return err
+	}
+
+	var codeSignEntitlements serialized.Object
+	format, err := plist.Unmarshal([]byte(codeSignEntitlementsContent), &codeSignEntitlements)
+	if err != nil {
+		return err
+	}
+
+	codeSignEntitlements[entitlement] = value
+
+	marshalled, err := plist.Marshal(codeSignEntitlements, format)
+	if err != nil {
+		return err
+	}
+
+	if err := ioutil.WriteFile(codeSignEntitlementsPth, marshalled, 0644); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // TargetCodeSignEntitlements ...
 func (p XcodeProj) TargetCodeSignEntitlements(target, configuration string) (serialized.Object, error) {
 	codeSignEntitlementsPth, err := p.TargetCodeSignEntitlementsPath(target, configuration)

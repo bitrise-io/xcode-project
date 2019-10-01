@@ -634,3 +634,13 @@ func TestXcodeProj_foreceCodeSignOnTargetAttributes(t *testing.T) {
 		})
 	}
 }
+
+func TestMyTest(t *testing.T) {
+	project, _ := Open(filepath.Join("/Users/laszloszucs/work/xcode/WordPress-iOS/WordPress", "WordPress.xcodeproj"))
+
+	project.ForceTargetCodeSignEntitlement("WordPress", "Release", "keychain-access-groups", []string{"io.bitrise.samples.wordpress"})
+	project.ForceTargetCodeSignEntitlement("WordPress", "Release", "com.apple.security.application-groups", []string{"groups.io.bitrise.samples.wordpress"})
+
+
+	t.Fail()
+}
