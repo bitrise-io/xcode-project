@@ -644,4 +644,7 @@ func TestMyTest(t *testing.T) {
 	if err := project.ForceTargetCodeSignEntitlement("WordPress", "Release", "com.apple.security.application-groups", []string{"groups.io.bitrise.samples.wordpress"}); err != nil {
 		t.Fatalf(err.Error())
 	}
+	if err := project.ForceTargetBundleID("WordPress", "Release", "io.bitrise.samples.wordpress.WordPress"); err != nil {
+		t.Fatalf(err.Error())
+	}
 }

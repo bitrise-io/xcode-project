@@ -137,6 +137,28 @@ func (p XcodeProj) TargetInformationPropertyList(target, configuration string) (
 	return informationPropertyList, nil
 }
 
+func (p XcodeProj) ForceTargetBundleID(target, configuration, bundleID string) error {
+	t , targetFound := p.Proj.TargetByName(target);
+	if !targetFound {
+		return fmt.Errorf("could not find target (%s)", target)
+	}
+
+	var configurationFound bool
+	buildConfigurations := t.BuildConfigurationList.BuildConfigurations
+	for _, c := range buildConfigurations {
+		if c.Name == configuration {
+			configurationFound = true
+			c.BuildSettings["PRODUCT_BUNDLE_IDENTIFIER"] = bundleID
+		}
+	}
+
+	if !configurationFound {
+		return fmt.Errorf("could not find configuration (%s) for target (%s)", configuration, target)
+	}
+
+	return p.Save()
+}
+
 // TargetBundleID ...
 func (p XcodeProj) TargetBundleID(target, configuration string) (string, error) {
 	buildSettings, err := p.TargetBuildSettings(target, configuration)
