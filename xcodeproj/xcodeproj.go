@@ -53,35 +53,48 @@ func (p XcodeProj) TargetCodeSignEntitlementsPath(target, configuration string) 
 	return p.buildSettingsFilePath(target, configuration, "CODE_SIGN_ENTITLEMENTS")
 }
 
+func ReadPlistFile(path string) (serialized.Object, int, error) {
+	codeSignEntitlementsContent, err := fileutil.ReadBytesFromFile(path)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var codeSignEntitlements serialized.Object
+	format, err := plist.Unmarshal([]byte(codeSignEntitlementsContent), &codeSignEntitlements)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return codeSignEntitlements, format, nil
+}
+
+func WritePlistFile(path string, entitlements serialized.Object, format int) error {
+	marshalled, err := plist.Marshal(entitlements, format)
+	if err != nil {
+		return err
+	}
+
+	if err := ioutil.WriteFile(path, marshalled, 0644); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (p XcodeProj) ForceTargetCodeSignEntitlement(target, configuration, entitlement string, value interface{}) error {
 	codeSignEntitlementsPth, err := p.TargetCodeSignEntitlementsPath(target, configuration)
 	if err != nil {
 		return err
 	}
-
-	codeSignEntitlementsContent, err := fileutil.ReadBytesFromFile(codeSignEntitlementsPth)
-	if err != nil {
-		return err
-	}
-
-	var codeSignEntitlements serialized.Object
-	format, err := plist.Unmarshal([]byte(codeSignEntitlementsContent), &codeSignEntitlements)
+	
+	codeSignEntitlements, format, err := ReadPlistFile(codeSignEntitlementsPth)
 	if err != nil {
 		return err
 	}
 
 	codeSignEntitlements[entitlement] = value
 
-	marshalled, err := plist.Marshal(codeSignEntitlements, format)
-	if err != nil {
-		return err
-	}
-
-	if err := ioutil.WriteFile(codeSignEntitlementsPth, marshalled, 0644); err != nil {
-		return err
-	}
-
-	return nil
+	return WritePlistFile(codeSignEntitlementsPth, codeSignEntitlements, format)
 }
 
 // TargetCodeSignEntitlements ...
@@ -91,13 +104,8 @@ func (p XcodeProj) TargetCodeSignEntitlements(target, configuration string) (ser
 		return nil, err
 	}
 
-	codeSignEntitlementsContent, err := fileutil.ReadBytesFromFile(codeSignEntitlementsPth)
+	codeSignEntitlements, _, err := ReadPlistFile(codeSignEntitlementsPth)
 	if err != nil {
-		return nil, err
-	}
-
-	var codeSignEntitlements serialized.Object
-	if _, err := plist.Unmarshal([]byte(codeSignEntitlementsContent), &codeSignEntitlements); err != nil {
 		return nil, err
 	}
 
