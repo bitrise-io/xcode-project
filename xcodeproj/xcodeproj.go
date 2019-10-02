@@ -81,6 +81,12 @@ func WritePlistFile(path string, entitlements serialized.Object, format int) err
 	return nil
 }
 
+// ForceTargetCodeSignEntitlement updates the project descriptor behind p. It
+// searches for the entitlements file for target and configuration and sets the
+// entitlement key to the value provided.
+// Error is returned:
+// - if there's an error during reading or writing the file
+// - if the file does not exist for the given target and configuration
 func (p XcodeProj) ForceTargetCodeSignEntitlement(target, configuration, entitlement string, value interface{}) error {
 	codeSignEntitlementsPth, err := p.TargetCodeSignEntitlementsPath(target, configuration)
 	if err != nil {
@@ -137,6 +143,11 @@ func (p XcodeProj) TargetInformationPropertyList(target, configuration string) (
 	return informationPropertyList, nil
 }
 
+// ForceTargetBundleID updates the projects bundle ID for the specified target
+// and configuration.
+// An error is returned if:
+// - the target or configuration is not found
+// - the given target or configuration is not found
 func (p XcodeProj) ForceTargetBundleID(target, configuration, bundleID string) error {
 	t, targetFound := p.Proj.TargetByName(target)
 	if !targetFound {
