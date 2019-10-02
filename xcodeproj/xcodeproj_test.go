@@ -635,16 +635,109 @@ func TestXcodeProj_foreceCodeSignOnTargetAttributes(t *testing.T) {
 	}
 }
 
-func TestMyTest(t *testing.T) {
-	project, _ := Open(filepath.Join("/Users/laszloszucs/work/xcode/WordPress-iOS/WordPress", "WordPress.xcodeproj"))
+func TestXcodeProj_forceBundleID(t *testing.T) {
+	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-io/xcode-project-test.git")
+	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
+	if err != nil {
+		t.Fatalf("Failed to init project for test case, error: %s", err)
+	}
 
-	if err := project.ForceTargetCodeSignEntitlement("WordPress", "Release", "keychain-access-groups", []string{"io.bitrise.samples.wordpress"}); err != nil {
-		t.Fatalf(err.Error())
+	tests := []struct {
+		name             string
+		target           string
+		configuration    string
+		bundleID         string
+		wantErr          bool
+	}{
+		{
+			name: "Update bundle ID for target and configuration",
+			target: "XcodeProj",
+			configuration: "Release",
+			bundleID: "io.bitrise.test.XcodeProj",
+			wantErr: false,
+		},
+		{
+			name: "Target not found",
+			target: "NON_EXISTENT_TARGET",
+			wantErr: true,
+		},
+		{
+			name: "Configuration not found",
+			configuration: "NON_EXISTENT_CONFIGURATION",
+			wantErr: true,
+		},
 	}
-	if err := project.ForceTargetCodeSignEntitlement("WordPress", "Release", "com.apple.security.application-groups", []string{"groups.io.bitrise.samples.wordpress"}); err != nil {
-		t.Fatalf(err.Error())
+
+	for _, tt := range tests {
+		t.Run(tt.name, func (t *testing.T) {
+
+			err := project.ForceTargetBundleID(tt.target, tt.configuration, tt.bundleID)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("got error: %s", err)
+			}
+
+			if got, err := project.TargetBundleID(tt.target, tt.configuration); (err != nil) != tt.wantErr {
+				t.Fatalf("error validating test: %s", err)
+				
+			} else if err == nil && got != tt.bundleID {
+				t.Fatalf("%s, %s", got, tt.bundleID)
+			}
+
+		})
 	}
-	if err := project.ForceTargetBundleID("WordPress", "Release", "io.bitrise.samples.wordpress.WordPress"); err != nil {
-		t.Fatalf(err.Error())
+}
+
+func TestXcodePrj_forceTargetCodeSignEntitlement(t *testing.T) {
+	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-io/xcode-project-test.git")
+	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
+	if err != nil {
+		t.Fatalf("Failed to init project for test case, error: %s", err)
 	}
+
+
+	tests := []struct {
+		name             string
+		target           string
+		configuration    string
+		entitlement      string
+		value            string
+		wantErr          bool
+	}{
+		{
+			name: "Update entitlement",
+			target: "TodayExtension",
+			configuration: "Release",
+			entitlement: "com.apple.security.application-groups",
+			value: "io.bitrise.test",
+			wantErr: false,
+		},
+		{
+			name: "Target not found",
+			target: "NON_EXISTENT_TARGET",
+			wantErr: true,
+		},
+		{
+			name: "Configuration not found",
+			configuration: "NON_EXISTENT_CONFIGURATION",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func (t *testing.T) {
+
+			err := project.ForceTargetCodeSignEntitlement(tt.target, tt.configuration, tt.entitlement, tt.value)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("got error: %s, but wanErr = %t", err, tt.wantErr)
+			}
+
+			if got, err := project.TargetCodeSignEntitlements(tt.target, tt.configuration); (err != nil) != tt.wantErr {
+				t.Fatalf("error validating test: %s", err)
+			} else if err == nil && got[tt.entitlement] != tt.value {
+				t.Fatalf("got %s, want %s", got[tt.entitlement], tt.value)
+			}
+		})
+	}
+
+
 }
