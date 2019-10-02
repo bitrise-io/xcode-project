@@ -86,7 +86,7 @@ func (p XcodeProj) ForceTargetCodeSignEntitlement(target, configuration, entitle
 	if err != nil {
 		return err
 	}
-	
+
 	codeSignEntitlements, format, err := ReadPlistFile(codeSignEntitlementsPth)
 	if err != nil {
 		return err
@@ -138,7 +138,7 @@ func (p XcodeProj) TargetInformationPropertyList(target, configuration string) (
 }
 
 func (p XcodeProj) ForceTargetBundleID(target, configuration, bundleID string) error {
-	t , targetFound := p.Proj.TargetByName(target);
+	t, targetFound := p.Proj.TargetByName(target)
 	if !targetFound {
 		return fmt.Errorf("could not find target (%s)", target)
 	}

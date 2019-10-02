@@ -643,33 +643,33 @@ func TestXcodeProj_forceBundleID(t *testing.T) {
 	}
 
 	tests := []struct {
-		name             string
-		target           string
-		configuration    string
-		bundleID         string
-		wantErr          bool
+		name          string
+		target        string
+		configuration string
+		bundleID      string
+		wantErr       bool
 	}{
 		{
-			name: "Update bundle ID for target and configuration",
-			target: "XcodeProj",
+			name:          "Update bundle ID for target and configuration",
+			target:        "XcodeProj",
 			configuration: "Release",
-			bundleID: "io.bitrise.test.XcodeProj",
-			wantErr: false,
+			bundleID:      "io.bitrise.test.XcodeProj",
+			wantErr:       false,
 		},
 		{
-			name: "Target not found",
-			target: "NON_EXISTENT_TARGET",
+			name:    "Target not found",
+			target:  "NON_EXISTENT_TARGET",
 			wantErr: true,
 		},
 		{
-			name: "Configuration not found",
+			name:          "Configuration not found",
 			configuration: "NON_EXISTENT_CONFIGURATION",
-			wantErr: true,
+			wantErr:       true,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func (t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 
 			err := project.ForceTargetBundleID(tt.target, tt.configuration, tt.bundleID)
 			if (err != nil) != tt.wantErr {
@@ -678,7 +678,7 @@ func TestXcodeProj_forceBundleID(t *testing.T) {
 
 			if got, err := project.TargetBundleID(tt.target, tt.configuration); (err != nil) != tt.wantErr {
 				t.Fatalf("error validating test: %s", err)
-				
+
 			} else if err == nil && got != tt.bundleID {
 				t.Fatalf("%s, %s", got, tt.bundleID)
 			}
@@ -694,37 +694,36 @@ func TestXcodePrj_forceTargetCodeSignEntitlement(t *testing.T) {
 		t.Fatalf("Failed to init project for test case, error: %s", err)
 	}
 
-
 	tests := []struct {
-		name             string
-		target           string
-		configuration    string
-		entitlement      string
-		value            string
-		wantErr          bool
+		name          string
+		target        string
+		configuration string
+		entitlement   string
+		value         string
+		wantErr       bool
 	}{
 		{
-			name: "Update entitlement",
-			target: "TodayExtension",
+			name:          "Update entitlement",
+			target:        "TodayExtension",
 			configuration: "Release",
-			entitlement: "com.apple.security.application-groups",
-			value: "io.bitrise.test",
-			wantErr: false,
+			entitlement:   "com.apple.security.application-groups",
+			value:         "io.bitrise.test",
+			wantErr:       false,
 		},
 		{
-			name: "Target not found",
-			target: "NON_EXISTENT_TARGET",
+			name:    "Target not found",
+			target:  "NON_EXISTENT_TARGET",
 			wantErr: true,
 		},
 		{
-			name: "Configuration not found",
+			name:          "Configuration not found",
 			configuration: "NON_EXISTENT_CONFIGURATION",
-			wantErr: true,
+			wantErr:       true,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func (t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 
 			err := project.ForceTargetCodeSignEntitlement(tt.target, tt.configuration, tt.entitlement, tt.value)
 			if (err != nil) != tt.wantErr {
@@ -738,6 +737,5 @@ func TestXcodePrj_forceTargetCodeSignEntitlement(t *testing.T) {
 			}
 		})
 	}
-
 
 }
