@@ -1,5 +1,13 @@
 package xcodeproj
 
+import (
+	"io/ioutil"
+
+	"github.com/bitrise-io/go-utils/fileutil"
+	"github.com/bitrise-io/xcode-project/serialized"
+	"howett.net/plist"
+)
+
 // ReadPlistFile returns a parsed object representing a plist file residing at path
 // and a format identifier specifying the plist file format.
 // Error is returned if:
@@ -17,7 +25,7 @@ func ReadPlistFile(path string) (serialized.Object, int, error) {
 	}
 
 	var codeSignEntitlements serialized.Object
-	format, err := plist.Unmarshal([]byte(codeSignEntitlementsContent), &codeSignEntitlements)
+	format, err := plist.Unmarshal(codeSignEntitlementsContent, &codeSignEntitlements)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -41,9 +49,5 @@ func WritePlistFile(path string, entitlements serialized.Object, format int) err
 		return err
 	}
 
-	if err := ioutil.WriteFile(path, marshalled, 0644); err != nil {
-		return err
-	}
-
-	return nil
+	return ioutil.WriteFile(path, marshalled, 0644)
 }
