@@ -20,6 +20,10 @@ func parseShowBuildSettingsOutput(out string) (serialized.Object, error) {
 		}
 
 		key := strings.TrimSpace(split[0])
+		if key == "" {
+			continue
+		}
+
 		value := strings.TrimSpace(strings.Join(split[1:], " = "))
 
 		settings[key] = value
