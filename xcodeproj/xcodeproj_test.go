@@ -622,7 +622,7 @@ func TestXcodeProj_foreceCodeSignOnTargetAttributes(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := foreceCodeSignOnTargetAttributes(tt.targetAttributes, tt.targetID, tt.developmentTeam)
+			err := forceCodeSignOnTargetAttributes(tt.targetAttributes, tt.targetID, tt.developmentTeam)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("XcodeProj.foreceCodeSignOnTargetAttributes() error = %v, wantErr %v", err, tt.wantErr)
 			}
