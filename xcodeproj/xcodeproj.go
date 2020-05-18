@@ -450,26 +450,23 @@ func forceCodeSignOnBuildConfiguration(buildConfiguration serialized.Object, dev
 		"PROVISIONING_PROFILE":           provisioningProfileUUID,
 	}
 	for key, value := range forceAttributes {
-		buildSettings = writeAttributeForMatchingSDKs(buildSettings, key, value)
+		writeAttributeForAllSDKs(buildSettings, key, value)
 	}
 
 	return nil
 }
 
-func writeAttributeForMatchingSDKs(buildSettings serialized.Object, newKey string, newValue string) serialized.Object {
-	newBuildSettings := make(map[string]interface{})
+func writeAttributeForAllSDKs(buildSettings serialized.Object, newKey string, newValue string) {
+	buildSettings[newKey] = newValue
 
-	matcher := regexp.MustCompile(fmt.Sprintf("^%s[sdk=.*]$", regexp.QuoteMeta(newKey)))
-	for oldKey, oldValue := range buildSettings {
-		if !matcher.Match([]byte(oldKey)) {
-			newBuildSettings[oldKey] = oldValue
+	// override specific build setting if any: https://stackoverflow.com/a/5382708/5842489
+	// Example: CODE_SIGN_IDENTITY[sdk=iphoneos*]
+	matcher := regexp.MustCompile(fmt.Sprintf(`^%s\[sdk=.*\]$`, regexp.QuoteMeta(newKey)))
+	for oldKey := range buildSettings {
+		if matcher.Match([]byte(oldKey)) {
+			buildSettings[oldKey] = newValue
 		}
 	}
-
-	buildSettings[newKey] = newValue
-	buildSettings[fmt.Sprintf("%s[sdk=%s]", newKey, "*")] = newValue
-
-	return newBuildSettings
 }
 
 // Save the XcodeProj

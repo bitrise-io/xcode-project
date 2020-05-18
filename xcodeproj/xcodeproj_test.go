@@ -737,5 +737,95 @@ func TestXcodePrj_forceTargetCodeSignEntitlement(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestForceCodeSign(t *testing.T) {
+	targetAttributes := map[string]interface{}{}
+	buildSettings := map[string]interface{}{}
+
+	xcodeProject := XcodeProj{
+		Proj: Proj{
+			ID: "project123",
+			Targets: []Target{
+				Target{
+					Name: "target",
+					ID:   "target123",
+				},
+			},
+		},
+		RawProj: serialized.Object(map[string]interface{}{
+			"objects": map[string]interface{}{
+				"project123": map[string]interface{}{
+					"attributes": map[string]interface{}{
+						"TargetAttributes": map[string]interface{}{
+							"target123": targetAttributes,
+						},
+					},
+				},
+				"target123": map[string]interface{}{
+					"buildConfigurationList": "configurationList123",
+				},
+				"configurationList123": map[string]interface{}{
+					"buildConfigurations": []interface{}{"configuration123"},
+				},
+				"configuration123": map[string]interface{}{
+					"name":          "Debug",
+					"buildSettings": buildSettings,
+				},
+			},
+		}),
+	}
+	err := xcodeProject.ForceCodeSign("Debug", "target", "team123", "identity123", "profile123")
+	require.NoError(t, err)
+
+	require.Equal(t, "Manual", targetAttributes["ProvisioningStyle"])
+	require.Equal(t, "team123", targetAttributes["DevelopmentTeam"])
+	require.Equal(t, "", targetAttributes["DevelopmentTeamName"])
+
+	require.Equal(t, 5, len(buildSettings))
+	require.Equal(t, "Manual", buildSettings["CODE_SIGN_STYLE"])
+	require.Equal(t, "team123", buildSettings["DEVELOPMENT_TEAM"])
+	require.Equal(t, "identity123", buildSettings["CODE_SIGN_IDENTITY"])
+	require.Equal(t, "", buildSettings["PROVISIONING_PROFILE_SPECIFIER"])
+	require.Equal(t, "profile123", buildSettings["PROVISIONING_PROFILE"])
+}
+
+func TestForceCodeSignOnBuildConfiguration(t *testing.T) {
+	buildConfiguration := serialized.Object(map[string]interface{}{"buildSettings": map[string]interface{}{}})
+	err := forceCodeSignOnBuildConfiguration(buildConfiguration, "team123", "profile123", "identity123")
+	require.NoError(t, err)
+
+	settings, err := buildConfiguration.Object("buildSettings")
+	require.NoError(t, err)
+
+	require.Equal(t, 5, len(settings))
+	require.Equal(t, "Manual", settings["CODE_SIGN_STYLE"])
+	require.Equal(t, "team123", settings["DEVELOPMENT_TEAM"])
+	require.Equal(t, "identity123", settings["CODE_SIGN_IDENTITY"])
+	require.Equal(t, "", settings["PROVISIONING_PROFILE_SPECIFIER"])
+	require.Equal(t, "profile123", settings["PROVISIONING_PROFILE"])
+}
+
+func TestForceCodeSignOnBuildConfiguration_SpecificSetting(t *testing.T) {
+	buildConfiguration := serialized.Object(map[string]interface{}{"buildSettings": map[string]interface{}{"CODE_SIGN_IDENTITY[sdk=iphoneos*]": "iPhone Developer: Dev Portal Bot Bitrise (E89JV3W9K4)"}})
+	err := forceCodeSignOnBuildConfiguration(buildConfiguration, "team123", "profile123", "identity123")
+	require.NoError(t, err)
+
+	settings, err := buildConfiguration.Object("buildSettings")
+	require.NoError(t, err)
+
+	require.Equal(t, 6, len(settings))
+	require.Equal(t, "identity123", settings["CODE_SIGN_IDENTITY[sdk=iphoneos*]"])
+}
+
+func TestForceCodeSignOnBuildConfiguration_OtherSetting(t *testing.T) {
+	buildConfiguration := serialized.Object(map[string]interface{}{"buildSettings": map[string]interface{}{"DEBUG_INFORMATION_FORMAT": "dwarf"}})
+	err := forceCodeSignOnBuildConfiguration(buildConfiguration, "team123", "profile123", "identity123")
+	require.NoError(t, err)
+
+	settings, err := buildConfiguration.Object("buildSettings")
+	require.NoError(t, err)
+
+	require.Equal(t, 6, len(settings))
+	require.Equal(t, "dwarf", settings["DEBUG_INFORMATION_FORMAT"])
 }
