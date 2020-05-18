@@ -435,7 +435,9 @@ func forceCodeSignOnTargetAttributes(targetAttributes serialized.Object, targetI
 }
 
 // forceCodeSignOnBuildConfiguration sets the BuildSettings for the provided build configuration.
-// **Overrides the CODE_SIGN_STYLE, DEVELOPMENT_TEAM, CODE_SIGN_IDENTITY, CODE_SIGN_IDENTITY[sdk=iphoneos\*], PROVISIONING_PROFILE, PROVISIONING_PROFILE[sdk=iphoneos\*] and clears the PROVISIONING_PROFILE_SPECIFIER in the provided `buildConfiguration`!**
+// **Overrides the CODE_SIGN_STYLE, DEVELOPMENT_TEAM, CODE_SIGN_IDENTITY, PROVISIONING_PROFILE
+// and clears the PROVISIONING_PROFILE_SPECIFIER in the provided `buildConfiguration`,
+// each modification also applies for the sdk specific settings too (CODE_SIGN_IDENTITY[sdk=iphoneos*])!**
 func forceCodeSignOnBuildConfiguration(buildConfiguration serialized.Object, developmentTeam, provisioningProfileUUID, codesignIdentity string) error {
 	buildSettings, err := buildConfiguration.Object("buildSettings")
 	if err != nil {
