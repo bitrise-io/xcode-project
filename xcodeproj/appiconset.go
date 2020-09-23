@@ -23,6 +23,10 @@ func AppIconSetPaths(projectPath string) (TargetsToAppIconSets, error) {
 	}
 
 	_, _, objects, projectID, err := open(absPth)
+	if err != nil {
+		return TargetsToAppIconSets{}, err
+	}
+
 	proj, err := parseProj(projectID, objects)
 	if err != nil {
 		return TargetsToAppIconSets{}, err
@@ -32,11 +36,6 @@ func AppIconSetPaths(projectPath string) (TargetsToAppIconSets, error) {
 }
 
 func appIconSetPaths(project Proj, projectPath string, objects serialized.Object) (TargetsToAppIconSets, error) {
-	type iconTarget struct {
-		target          Target
-		appIconSetNames []string
-	}
-
 	targetToAppIcons := map[string][]string{}
 	for _, target := range project.Targets {
 		appIconSetNames := getAppIconSetNames(target)
