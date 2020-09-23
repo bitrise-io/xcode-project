@@ -68,6 +68,7 @@ func appIconSetPaths(project Proj, projectPath string, objects serialized.Object
 }
 
 func lookupAppIconPaths(projectPath string, assetCatalogs []fileReference, appIconSetName string, projectID string, objects serialized.Object) ([]string, error) {
+	var icons []string
 	for _, fileReference := range assetCatalogs {
 		resolvedPath, err := resolveObjectAbsolutePath(fileReference.id, projectID, projectPath, objects)
 		if err != nil {
@@ -83,9 +84,11 @@ func lookupAppIconPaths(projectPath string, assetCatalogs []fileReference, appIc
 		if err != nil {
 			return nil, err
 		}
-		return matches, nil
+
+		icons = append(icons, matches...)
 	}
-	return nil, nil
+
+	return icons, nil
 }
 
 func assetCatalogs(target Target, projectID string, objects serialized.Object) ([]fileReference, error) {
