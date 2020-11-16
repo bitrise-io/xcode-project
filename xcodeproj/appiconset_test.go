@@ -3,7 +3,7 @@ package xcodeproj
 import (
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -55,29 +55,60 @@ func Test_assetCatalog(t *testing.T) {
 }
 
 func Test_appIconSetPaths(t *testing.T) {
-	projectDir, err := ioutil.TempDir("", "ios-dummy-project")
+	// Create project with 1 asset catalog
+	projectDir1, err := ioutil.TempDir("", "ios-dummy-project1")
 	if err != nil {
-		t.Errorf("setup: failed to create temp dir")
+		t.Errorf("setup: failed to create temp dir, %v", err)
 	}
 	defer func() {
-		if err := os.RemoveAll(projectDir); err != nil {
+		if err := os.RemoveAll(projectDir1); err != nil {
 			t.Logf("Failed to clean up after test, error: %s", err)
 		}
 	}()
 
-	appIconSetPath := path.Join(projectDir, "ios-simple-objc", "Images.xcassets", "AppIcon.appiconset")
-	if err := os.MkdirAll(appIconSetPath, 0755); err != nil {
-		t.Errorf("setup: failed top create dir %s", appIconSetPath)
+	appIconSetPath1 := filepath.Join(projectDir1, "ios-simple-objc", "Images.xcassets", "AppIcon.appiconset")
+	if err := os.MkdirAll(appIconSetPath1, 0755); err != nil {
+		t.Errorf("setup: failed top create dir %v", err)
 	}
 
-	var objects serialized.Object
-	_, err = plist.Unmarshal([]byte(rawProj), &objects)
+	var objects1 serialized.Object
+	_, err = plist.Unmarshal([]byte(rawProj), &objects1)
 	if err != nil {
-		t.Fatalf("setup: failed to unmarshal project")
+		t.Fatalf("setup: failed to unmarshal project, %v", err)
 	}
-	proj, err := parseProj("BA3CBE6D19F7A93800CED4D5", objects)
+	// PBXProject object ID
+	proj1, err := parseProj("BA3CBE6D19F7A93800CED4D5", objects1)
 	if err != nil {
-		t.Fatalf("setup: failed to parse project")
+		t.Fatalf("setup: failed to parse project, %v", err)
+	}
+
+	// Create dummy project with 2 asset catalogs
+	projectDir2, err := ioutil.TempDir("", "ios-dummy-project2")
+	if err != nil {
+		t.Errorf("setup: failed to create temp dir, %v", err)
+	}
+	defer func() {
+		if err := os.RemoveAll(projectDir2); err != nil {
+			t.Logf("Failed to clean up after test, error: %s", err)
+		}
+	}()
+
+	appIconSetPath2 := filepath.Join(projectDir2, "Catalyst Sample", "Assets.xcassets", "AppIcon.appiconset")
+	if err := os.MkdirAll(appIconSetPath2, 0755); err != nil {
+		t.Errorf("setup: failed top create dir, %s", err)
+	}
+	if err := os.MkdirAll(filepath.Join(projectDir2, "Catalyst Sample", "Preview Content", "Preview Assets.appiconset"), 0755); err != nil {
+		t.Errorf("setup: failed top create dir, %s", err)
+	}
+
+	var objects2 serialized.Object
+	_, err = plist.Unmarshal([]byte(rawCatalystProj), &objects2)
+	if err != nil {
+		t.Fatalf("setup: failed to unmarshal project, %v", err)
+	}
+	proj2, err := parseProj("13917C0A243F43D00087912B", objects2)
+	if err != nil {
+		t.Fatalf("setup: failed to parse project, %s", err)
 	}
 
 	type args struct {
@@ -92,14 +123,26 @@ func Test_appIconSetPaths(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "happy case",
+			name: "single asset catlog",
 			args: args{
-				project:     proj,
-				projectPath: path.Join(projectDir, "ios-simple-objc.xcodeproj"),
-				objects:     objects,
+				project:     proj1,
+				projectPath: filepath.Join(projectDir1, "ios-simple-objc.xcodeproj"),
+				objects:     objects1,
 			},
 			want: TargetsToAppIconSets{
-				proj.Targets[0].ID: []string{appIconSetPath},
+				proj1.Targets[0].ID: []string{appIconSetPath1},
+			},
+			wantErr: false,
+		},
+		{
+			name: "2 asset catalogs",
+			args: args{
+				project:     proj2,
+				projectPath: filepath.Join(projectDir2, "Catalyst Sample.xcodeproj"),
+				objects:     objects2,
+			},
+			want: TargetsToAppIconSets{
+				proj2.Targets[0].ID: []string{appIconSetPath2},
 			},
 			wantErr: false,
 		},
