@@ -106,6 +106,15 @@ func Test_appIconSetPaths(t *testing.T) {
 			want: []string{"ios-simple-objc", "Images.xcassets", "AppIcon.appiconset"},
 		},
 		{
+			name:         "asset catalog missing",
+			rawProj:      rawProj,
+			rootObjectID: "BA3CBE6D19F7A93800CED4D5",
+			projPath:     "ios-simple-objc.xcodeproj",
+			iconSetPaths: [][]string{},
+			want:         []string{},
+			wantErr:      true,
+		},
+		{
 			name:         "2 asset catalogs",
 			rawProj:      rawCatalystProj,
 			rootObjectID: "13917C0A243F43D00087912B",
@@ -115,18 +124,6 @@ func Test_appIconSetPaths(t *testing.T) {
 				{"Catalyst Sample", "Preview Content", "Preview Assets.appiconset"},
 			},
 			want: []string{"Catalyst Sample", "Assets.xcassets", "AppIcon.appiconset"},
-		},
-		{
-			name:         "2 asset catalogs",
-			rawProj:      rawCatalystProj,
-			rootObjectID: "13917C0A243F43D00087912B",
-			projPath:     "Catalyst Sample.xcodeproj",
-			iconSetPaths: [][]string{
-				{"Catalyst Sample", "BadAssetsPath.xcassets", "AppIcon.appiconset"},
-				{"Catalyst Sample", "Preview Content", "Preview Assets.appiconset"},
-			},
-			want:    []string{},
-			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -144,8 +141,11 @@ func Test_appIconSetPaths(t *testing.T) {
 			if err != nil {
 				t.Errorf("setup: %v", err)
 			}
-			want := TargetsToAppIconSets{
-				internalProject.proj.Targets[0].ID: []string{filepath.Join(append([]string{projectDir}, tt.want...)...)},
+			var want TargetsToAppIconSets
+			if len(tt.want) != 0 {
+				want = TargetsToAppIconSets{
+					internalProject.proj.Targets[0].ID: []string{filepath.Join(append([]string{projectDir}, tt.want...)...)},
+				}
 			}
 
 			got, err := appIconSetPaths(internalProject.proj, filepath.Join(projectDir, tt.projPath), internalProject.objects)
