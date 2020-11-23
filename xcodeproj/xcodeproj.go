@@ -313,6 +313,10 @@ func Open(pth string) (XcodeProj, error) {
 	}
 
 	p, err := parsePBXProjContent(b)
+	if err != nil {
+		return XcodeProj{}, err
+	}
+
 	p.Path = absPth
 	p.Name = strings.TrimSuffix(filepath.Base(absPth), filepath.Ext(absPth))
 
