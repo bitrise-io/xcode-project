@@ -67,6 +67,7 @@ const rawProj = `
 			BA3CBE9119F7A93900CED4D5 /* ios-simple-objcTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ios-simple-objcTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 			BA3CBE9619F7A93900CED4D5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 			BA3CBE9719F7A93900CED4D5 /* ios_simple_objcTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ios_simple_objcTests.m; sourceTree = "<group>"; };
+			0FEB04492428DD6D00BD13E6 /* SignInJSON.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = SignInJSON.json; sourceTree = "<group>"; };
 	/* End PBXFileReference section */
 	
 	/* Begin PBXFrameworksBuildPhase section */
@@ -93,7 +94,16 @@ const rawProj = `
 					BA3CBE7719F7A93800CED4D5 /* ios-simple-objc */,
 					BA3CBE9419F7A93900CED4D5 /* ios-simple-objcTests */,
 					BA3CBE7619F7A93800CED4D5 /* Products */,
+					0F8FD97B23F5831A006C13DE /* JSON's */,
 				);
+				sourceTree = "<group>";
+			};
+			0F8FD97B23F5831A006C13DE /* JSON's */ = {
+				isa = PBXGroup;
+				children = (
+					0FEB04492428DD6D00BD13E6 /* SignInJSON.json */,
+				);
+				path = "JSON's";
 				sourceTree = "<group>";
 			};
 			BA3CBE7619F7A93800CED4D5 /* Products */ = {
