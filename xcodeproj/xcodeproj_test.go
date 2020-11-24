@@ -790,6 +790,73 @@ func TestForceCodeSign(t *testing.T) {
 	require.Equal(t, "profile123", buildSettings["PROVISIONING_PROFILE"])
 }
 
+func TestXcodeProj_ForceCodeSign(t *testing.T) {
+	// arrange
+	proj, err := parsePBXProjContent([]byte(pbxprojWithouthTargetAttributes))
+	require.NoError(t, err)
+
+	configurationName := "Debug"
+	targetName := "Target"
+
+	team := "ABCD1234"
+	signingIdentity := "Apple Development: John Doe (ASDF1234)"
+	provisioningProfile := "asdf56b6-e75a-4f86-bf25-101bfc2fasdf"
+
+	// act
+	err = proj.ForceCodeSign(configurationName, targetName, team, signingIdentity, provisioningProfile)
+	require.NoError(t, err)
+
+	// assert
+	target := findTarget(t, proj, targetName)
+
+	targetAttr := projectTargetAttributes(t, proj, target.ID)
+	ensureValue(t, targetAttr, "ProvisioningStyle", "Manual")
+	ensureValue(t, targetAttr, "DevelopmentTeam", team)
+	ensureValue(t, targetAttr, "DevelopmentTeamName", "")
+
+	targetBuildConfig := findBuildConfiguration(t, target, configurationName)
+	ensureValue(t, targetBuildConfig.BuildSettings, "CODE_SIGN_STYLE", "Manual")
+	ensureValue(t, targetBuildConfig.BuildSettings, "DEVELOPMENT_TEAM", team)
+	ensureValue(t, targetBuildConfig.BuildSettings, "CODE_SIGN_IDENTITY", signingIdentity)
+	ensureValue(t, targetBuildConfig.BuildSettings, "PROVISIONING_PROFILE_SPECIFIER", "")
+	ensureValue(t, targetBuildConfig.BuildSettings, "PROVISIONING_PROFILE", provisioningProfile)
+}
+
+func ensureValue(t *testing.T, obj serialized.Object, key, value string) {
+	v, err := obj.String(key)
+	require.NoError(t, err)
+	require.Equal(t, value, v)
+}
+
+func findTarget(t *testing.T, project *XcodeProj, name string) Target {
+	var target Target
+	for _, t := range project.Proj.Targets {
+		if t.Name == "Target" {
+			target = t
+			break
+		}
+	}
+	require.NotNil(t, target)
+	return target
+}
+
+func projectTargetAttributes(t *testing.T, project *XcodeProj, targetID string) serialized.Object {
+	attr, err := project.Proj.Attributes.TargetAttributes.Object(targetID)
+	require.NoError(t, err)
+	return attr
+}
+
+func findBuildConfiguration(t *testing.T, target Target, name string) BuildConfiguration {
+	var config BuildConfiguration
+	for _, c := range target.BuildConfigurationList.BuildConfigurations {
+		if c.Name == name {
+			config = c
+		}
+	}
+	require.NotNil(t, config)
+	return config
+}
+
 func TestForceCodeSignOnBuildConfiguration(t *testing.T) {
 	buildConfiguration := serialized.Object(map[string]interface{}{"buildSettings": map[string]interface{}{}})
 	err := forceCodeSignOnBuildConfiguration(buildConfiguration, "team123", "profile123", "identity123")
