@@ -144,6 +144,7 @@ const pbxprojWithouthTargetAttributes = `// !$*UTF8*$!
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Development: Bitrise Bot (ASDF1234)";
 				DEVELOPMENT_ASSET_PATHS = "\"Target/Preview Content\"";
 				DEVELOPMENT_TEAM = ASDF2FASDF;
 				ENABLE_PREVIEWS = YES;
