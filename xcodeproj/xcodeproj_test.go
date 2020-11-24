@@ -685,11 +685,6 @@ func TestXcodeProj_ForceCodeSign_WithouthTargetAttributes(t *testing.T) {
 	// assert
 	target := findTarget(t, proj, targetName)
 
-	targetAttr := projectTargetAttributes(t, proj, target.ID)
-	ensureValue(t, targetAttr, "ProvisioningStyle", "Manual")
-	ensureValue(t, targetAttr, "DevelopmentTeam", team)
-	ensureValue(t, targetAttr, "DevelopmentTeamName", "")
-
 	targetBuildConfig := findBuildConfiguration(t, target, configurationName)
 	ensureValue(t, targetBuildConfig.BuildSettings, "CODE_SIGN_STYLE", "Manual")
 	ensureValue(t, targetBuildConfig.BuildSettings, "DEVELOPMENT_TEAM", team)
