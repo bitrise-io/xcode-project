@@ -829,3 +829,29 @@ func TestForceCodeSignOnBuildConfiguration_OtherSetting(t *testing.T) {
 	require.Equal(t, 6, len(settings))
 	require.Equal(t, "dwarf", settings["DEBUG_INFORMATION_FORMAT"])
 }
+
+func TestXcodeProj_SavedProjectStaysReadable(t *testing.T) {
+	// Arrange
+	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-io/xcode-project-test.git")
+	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
+	if err != nil {
+		t.Fatalf("Failed to init project for test case, error: %s", err)
+	}
+
+	// Act + Assert
+	objects, _ := project.RawProj.Object("objects")
+	jsonGroup, _ := objects.Object("0F8FD97B23F5831A006C13DE")
+	path, _ := jsonGroup.String("path")
+
+	if path != "JSON's" {
+		t.Errorf("Test project modified, file does not contain special characters")
+	}
+
+	if err := project.Save(); err != nil {
+		t.Errorf("Failed to save project, error: %s", err)
+	}
+	_, err = Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
+	if err != nil {
+		t.Fatalf("Failed to reopen project after saving it, error: %s", err)
+	}
+}
