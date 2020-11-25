@@ -839,9 +839,18 @@ func TestXcodeProj_SavedProjectStaysReadable(t *testing.T) {
 	}
 
 	// Act + Assert
-	objects, _ := project.RawProj.Object("objects")
-	jsonGroup, _ := objects.Object("0F8FD97B23F5831A006C13DE")
-	path, _ := jsonGroup.String("path")
+	objects, errObjects := project.RawProj.Object("objects")
+	if errObjects != nil {
+		t.Errorf("Failed reading test project, error: %s", errObjects)
+	}
+	jsonGroup, errGroup := objects.Object("0F8FD97B23F5831A006C13DE")
+	if errGroup != nil {
+		t.Errorf("Failed reading test project, error: %s", errGroup)
+	}
+	path, errPath := jsonGroup.String("path")
+	if errObjects != nil {
+		t.Errorf("Failed reading test project, error: %s", errPath)
+	}
 
 	if path != "JSON's" {
 		t.Errorf("Test project modified, file does not contain special characters")
