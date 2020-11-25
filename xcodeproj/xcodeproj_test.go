@@ -702,7 +702,7 @@ func ensureValue(t *testing.T, obj serialized.Object, key, value string) {
 func findTarget(t *testing.T, project *XcodeProj, name string) Target {
 	var target Target
 	for _, t := range project.Proj.Targets {
-		if t.Name == "Target" {
+		if t.Name == name {
 			target = t
 			break
 		}

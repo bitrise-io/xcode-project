@@ -387,11 +387,6 @@ func (p *XcodeProj) ForceCodeSign(configuration, targetName, developmentTeam, co
 		return fmt.Errorf("failed to find target with name: %s", targetName)
 	}
 
-	targetAttributes, err := p.TargetAttributes()
-	if err != nil {
-		return fmt.Errorf("failed to get project's target attributes, error: %s", err)
-	}
-
 	buildConfigurationList, err := p.BuildConfigurationList(target.ID)
 	if err != nil {
 		return fmt.Errorf("failed to get target's (%s) buildConfigurationList, error: %s", target.ID, err)
@@ -413,9 +408,13 @@ func (p *XcodeProj) ForceCodeSign(configuration, targetName, developmentTeam, co
 		return fmt.Errorf("failed to find buildConfiguration for configuration %s in the buildConfiguration list: %s", configuration, pretty.Object(buildConfigurations))
 	}
 
-	// Override TargetAttributes
-	if err = forceCodeSignOnTargetAttributes(targetAttributes, target.ID, developmentTeam); err != nil {
-		return fmt.Errorf("failed to change code signing in target attributes, error: %s", err)
+	if targetAttributes, err := p.TargetAttributes(); err == nil {
+		// Override TargetAttributes
+		if err = forceCodeSignOnTargetAttributes(targetAttributes, target.ID, developmentTeam); err != nil {
+			return fmt.Errorf("failed to change code signing in target attributes, error: %s", err)
+		}
+	} else if !serialized.IsKeyNotFoundError(err) {
+		return fmt.Errorf("failed to get project's target attributes, error: %s", err)
 	}
 
 	// Override BuildSettings
@@ -430,6 +429,10 @@ func (p *XcodeProj) ForceCodeSign(configuration, targetName, developmentTeam, co
 func forceCodeSignOnTargetAttributes(targetAttributes serialized.Object, targetID, developmentTeam string) error {
 	targetAttribute, err := targetAttributes.Object(targetID)
 	if err != nil {
+		// Skip projects not using target attributes
+		if serialized.IsKeyNotFoundError(err) {
+			return nil
+		}
 		return fmt.Errorf("failed to get traget's (%s) attributes, error: %s", targetID, err)
 	}
 
