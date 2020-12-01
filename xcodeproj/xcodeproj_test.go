@@ -693,6 +693,29 @@ func TestXcodeProj_ForceCodeSign_WithouthTargetAttributes(t *testing.T) {
 	ensureValue(t, targetBuildConfig.BuildSettings, "PROVISIONING_PROFILE", provisioningProfile)
 }
 
+func TestXcodeProj_ForceCodeSign_OverridesSigningBuildSettingsOnly(t *testing.T) {
+	// arrange
+	proj, err := parsePBXProjContent([]byte(pbxprojWithouthTargetAttributes))
+	require.NoError(t, err)
+
+	configurationName := "Debug"
+	targetName := "TargetWithouthTargetAttributes"
+
+	team := "ABCD1234"
+	signingIdentity := "Apple Development: John Doe (ASDF1234)"
+	provisioningProfile := "asdf56b6-e75a-4f86-bf25-101bfc2fasdf"
+
+	// act
+	err = proj.ForceCodeSign(configurationName, targetName, team, signingIdentity, provisioningProfile)
+	require.NoError(t, err)
+
+	// assert
+	target := findTarget(t, proj, targetName)
+
+	targetBuildConfig := findBuildConfiguration(t, target, configurationName)
+	ensureValue(t, targetBuildConfig.BuildSettings, "INFOPLIST_FILE", "Target copy-Info.plist")
+}
+
 func ensureValue(t *testing.T, obj serialized.Object, key, value string) {
 	v, err := obj.String(key)
 	require.NoError(t, err)
@@ -726,16 +749,4 @@ func findBuildConfiguration(t *testing.T, target Target, name string) BuildConfi
 	}
 	require.NotNil(t, config)
 	return config
-}
-
-func TestForceCodeSignOnBuildConfiguration_OtherSetting(t *testing.T) {
-	buildConfiguration := serialized.Object(map[string]interface{}{"buildSettings": map[string]interface{}{"DEBUG_INFORMATION_FORMAT": "dwarf"}})
-	err := forceCodeSignOnBuildConfiguration(buildConfiguration, "team123", "profile123", "identity123")
-	require.NoError(t, err)
-
-	settings, err := buildConfiguration.Object("buildSettings")
-	require.NoError(t, err)
-
-	require.Equal(t, 6, len(settings))
-	require.Equal(t, "dwarf", settings["DEBUG_INFORMATION_FORMAT"])
 }
