@@ -41,9 +41,8 @@ func parseProj(id string, objects serialized.Object) (Proj, error) {
 	}
 
 	var targets []Target
-	for i := range rawTargets {
+	for _, targetID := range rawTargets {
 		// rawTargets can contain more target IDs than the project configuration has
-		targetID := rawTargets[i]
 		hasTargetNode, err := hasTargetNode(targetID, objects)
 		if err != nil {
 			return Proj{}, fmt.Errorf("failed to access target object with id %s: %s", targetID, err)
@@ -53,7 +52,7 @@ func parseProj(id string, objects serialized.Object) (Proj, error) {
 			continue
 		}
 
-		target, err := parseTarget(rawTargets[i], objects)
+		target, err := parseTarget(targetID, objects)
 		if err != nil {
 			return Proj{}, fmt.Errorf("failed to parse target with id: %s: %s", targetID, err)
 		}
