@@ -408,6 +408,11 @@ func (p *XcodeProj) ForceCodeSign(configuration, targetName, developmentTeam, co
 		return fmt.Errorf("failed to find buildConfiguration for configuration %s in the buildConfiguration list: %s", configuration, pretty.Object(buildConfigurations))
 	}
 
+	// Override BuildSettings
+	if err = forceCodeSignOnBuildConfiguration(buildConfiguration, developmentTeam, provisioningProfileUUID, codesignIdentity); err != nil {
+		return fmt.Errorf("failed to change code signing in build settings, error: %s", err)
+	}
+
 	if targetAttributes, err := p.TargetAttributes(); err == nil {
 		// Override TargetAttributes
 		if err = forceCodeSignOnTargetAttributes(targetAttributes, target.ID, developmentTeam); err != nil {
@@ -417,10 +422,6 @@ func (p *XcodeProj) ForceCodeSign(configuration, targetName, developmentTeam, co
 		return fmt.Errorf("failed to get project's target attributes, error: %s", err)
 	}
 
-	// Override BuildSettings
-	if err = forceCodeSignOnBuildConfiguration(buildConfiguration, developmentTeam, provisioningProfileUUID, codesignIdentity); err != nil {
-		return fmt.Errorf("failed to change code signing in build settings, error: %s", err)
-	}
 	return nil
 }
 
