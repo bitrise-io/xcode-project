@@ -433,7 +433,7 @@ func forceCodeSignOnTargetAttributes(targetAttributes serialized.Object, targetI
 		if serialized.IsKeyNotFoundError(err) {
 			return nil
 		}
-		return fmt.Errorf("failed to get traget's (%s) attributes, error: %s", targetID, err)
+		return fmt.Errorf("failed to get target's (%s) attributes, error: %s", targetID, err)
 	}
 
 	targetAttribute["ProvisioningStyle"] = "Manual"
