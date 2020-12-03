@@ -830,9 +830,9 @@ func TestForceCodeSignOnBuildConfiguration_OtherSetting(t *testing.T) {
 	require.Equal(t, "dwarf", settings["DEBUG_INFORMATION_FORMAT"])
 }
 
-func TestXcodeProj_SavedProjectStaysReadable(t *testing.T) {
+func TestXcodeProjOpen_AposthropeSupported(t *testing.T) {
 	// Arrange
-	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-io/xcode-project-test.git")
+	dir := testhelper.GitCloneBranchIntoTmpDir(t, "https://github.com/bitrise-io/xcode-project-test.git", "special-character")
 	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
 	if err != nil {
 		t.Fatalf("Failed to init project for test case, error: %s", err)
