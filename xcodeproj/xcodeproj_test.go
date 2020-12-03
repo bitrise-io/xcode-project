@@ -750,3 +750,38 @@ func findBuildConfiguration(t *testing.T, target Target, name string) BuildConfi
 	require.NotNil(t, config)
 	return config
 }
+
+func TestXcodeProjOpen_AposthropeSupported(t *testing.T) {
+	// Arrange
+	dir := testhelper.GitCloneBranchIntoTmpDir(t, "https://github.com/bitrise-io/xcode-project-test.git", "special-character")
+	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
+	if err != nil {
+		t.Fatalf("Failed to init project for test case, error: %s", err)
+	}
+
+	// Act + Assert
+	objects, errObjects := project.RawProj.Object("objects")
+	if errObjects != nil {
+		t.Errorf("Failed reading test project, error: %s", errObjects)
+	}
+	jsonGroup, errGroup := objects.Object("0F8FD97B23F5831A006C13DE")
+	if errGroup != nil {
+		t.Errorf("Failed reading test project, error: %s", errGroup)
+	}
+	path, errPath := jsonGroup.String("path")
+	if errObjects != nil {
+		t.Errorf("Failed reading test project, error: %s", errPath)
+	}
+
+	if path != "JSON's" {
+		t.Errorf("Test project modified, file does not contain special characters")
+	}
+
+	if err := project.Save(); err != nil {
+		t.Errorf("Failed to save project, error: %s", err)
+	}
+	_, err = Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
+	if err != nil {
+		t.Fatalf("Failed to reopen project after saving it, error: %s", err)
+	}
+}
