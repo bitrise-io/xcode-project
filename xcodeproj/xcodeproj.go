@@ -480,7 +480,7 @@ func (p XcodeProj) Save() error {
 
 // savePBXProj overrides the project.pbxproj file of the XcodeProj with the contents of `rawProj`
 func (p XcodeProj) savePBXProj() error {
-	b, err := plist.Marshal(p.RawProj, plist.BinaryFormat)
+	b, err := plist.Marshal(p.RawProj, p.Format)
 	if err != nil {
 		return fmt.Errorf("failed to marshal .pbxproj")
 	}
