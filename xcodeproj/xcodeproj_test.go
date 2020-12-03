@@ -2,10 +2,8 @@ package xcodeproj
 
 import (
 	"path/filepath"
-	"reflect"
 	"testing"
 
-	"github.com/bitrise-io/xcode-project/pretty"
 	"github.com/bitrise-io/xcode-project/serialized"
 	"github.com/bitrise-io/xcode-project/testhelper"
 	"github.com/bitrise-io/xcode-project/xcscheme"
@@ -531,110 +529,6 @@ func TestIsXcodeProj(t *testing.T) {
 	require.False(t, IsXcodeProj("./BitriseSample.xcworkspace"))
 }
 
-func TestXcodeProj_forceCodeSign(t *testing.T) {
-	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-io/xcode-project-test.git")
-	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
-	if err != nil {
-		t.Fatalf("Failed to init project for test case, error: %s", err)
-	}
-	tests := []struct {
-		name                    string
-		configuration           string
-		developmentTeam         string
-		targetName              string
-		codeSignIdentity        string
-		provisioningProfileUUID string
-		wantErr                 bool
-	}{
-		{
-			name:                    "Force code sign - XcodeProj",
-			configuration:           "Release",
-			developmentTeam:         "72SA8V3WYL",
-			targetName:              "XcodeProj",
-			codeSignIdentity:        "iPhone Developer: Test",
-			provisioningProfileUUID: "",
-			wantErr:                 false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := project.ForceCodeSign(tt.configuration, tt.targetName, tt.developmentTeam, tt.codeSignIdentity, tt.provisioningProfileUUID); (err != nil) != tt.wantErr {
-				t.Errorf("XcodeProj.forceCodeSign() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-
-	if err := project.Save(); err != nil {
-		t.Errorf("Failed to save project, error: %s", err)
-	}
-}
-
-func TestXcodeProj_foreceCodeSignOnTargetAttributes(t *testing.T) {
-	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-io/xcode-project-test.git")
-	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
-	if err != nil {
-		t.Fatalf("Failed to init project for test case, error: %s", err)
-	}
-	tests := []struct {
-		name             string
-		targetAttributes serialized.Object
-		developmentTeam  string
-		targetID         string
-		want             serialized.Object
-		wantErr          bool
-	}{
-		{
-			name: "Force code sign - XcodeProj",
-			targetAttributes: func() serialized.Object {
-				targetAttributes, err := project.TargetAttributes()
-				if err != nil {
-					t.Fatalf("Failed to fetch TargetAttributes for test case, error: %s", err)
-				}
-				return targetAttributes
-			}(),
-			developmentTeam: "72SA8V3WYL",
-			targetID:        "7D5B35FB20E28EE80022BAE6",
-			want: map[string]interface{}{
-				"7D0342F020F4BA280050B6A6": map[string]interface{}{
-					"CreatedOnToolsVersion": "9.4.1",
-					"TestTargetID":          "7D5B35FB20E28EE80022BAE6",
-				},
-				"7D03430C20F4BB070050B6A6": map[string]interface{}{
-					"CreatedOnToolsVersion": "9.4.1",
-					"SystemCapabilities": map[string]interface{}{
-						"com.apple.Push": map[string]interface{}{
-							"enabled": "1",
-						},
-						"com.apple.iCloud": map[string]interface{}{
-							"enabled": "1",
-						},
-					},
-				},
-				"7D5B35FB20E28EE80022BAE6": map[string]interface{}{
-					"CreatedOnToolsVersion": "9.4.1",
-					"DevelopmentTeam":       "72SA8V3WYL",
-					"DevelopmentTeamName":   "",
-					"ProvisioningStyle":     "Manual",
-				},
-			},
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := forceCodeSignOnTargetAttributes(tt.targetAttributes, tt.targetID, tt.developmentTeam)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("XcodeProj.foreceCodeSignOnTargetAttributes() error = %v, wantErr %v", err, tt.wantErr)
-			}
-
-			if !reflect.DeepEqual(tt.targetAttributes, tt.want) {
-				t.Errorf("XcodeProj.foreceCodeSignOnTargetAttributes() got = %s, wantErr %s", pretty.Object(tt.targetAttributes), pretty.Object(tt.want))
-				return
-			}
-		})
-	}
-}
-
 func TestXcodeProj_forceBundleID(t *testing.T) {
 	dir := testhelper.GitCloneIntoTmpDir(t, "https://github.com/bitrise-io/xcode-project-test.git")
 	project, err := Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
@@ -739,95 +633,122 @@ func TestXcodePrj_forceTargetCodeSignEntitlement(t *testing.T) {
 	}
 }
 
-func TestForceCodeSign(t *testing.T) {
-	targetAttributes := map[string]interface{}{}
-	buildSettings := map[string]interface{}{}
+func TestXcodeProj_ForceCodeSign(t *testing.T) {
+	// arrange
+	proj, err := parsePBXProjContent([]byte(pbxprojWithouthTargetAttributes))
+	require.NoError(t, err)
 
-	xcodeProject := XcodeProj{
-		Proj: Proj{
-			ID: "project123",
-			Targets: []Target{
-				Target{
-					Name: "target",
-					ID:   "target123",
-				},
-			},
-		},
-		RawProj: serialized.Object(map[string]interface{}{
-			"objects": map[string]interface{}{
-				"project123": map[string]interface{}{
-					"attributes": map[string]interface{}{
-						"TargetAttributes": map[string]interface{}{
-							"target123": targetAttributes,
-						},
-					},
-				},
-				"target123": map[string]interface{}{
-					"buildConfigurationList": "configurationList123",
-				},
-				"configurationList123": map[string]interface{}{
-					"buildConfigurations": []interface{}{"configuration123"},
-				},
-				"configuration123": map[string]interface{}{
-					"name":          "Debug",
-					"buildSettings": buildSettings,
-				},
-			},
-		}),
+	configurationName := "Debug"
+	targetName := "Target"
+
+	team := "ABCD1234"
+	signingIdentity := "Apple Development: John Doe (ASDF1234)"
+	provisioningProfile := "asdf56b6-e75a-4f86-bf25-101bfc2fasdf"
+
+	// act
+	err = proj.ForceCodeSign(configurationName, targetName, team, signingIdentity, provisioningProfile)
+	require.NoError(t, err)
+
+	// assert
+	target := findTarget(t, proj, targetName)
+
+	targetAttr := projectTargetAttributes(t, proj, target.ID)
+	ensureValue(t, targetAttr, "ProvisioningStyle", "Manual")
+	ensureValue(t, targetAttr, "DevelopmentTeam", team)
+	ensureValue(t, targetAttr, "DevelopmentTeamName", "")
+
+	targetBuildConfig := findBuildConfiguration(t, target, configurationName)
+	ensureValue(t, targetBuildConfig.BuildSettings, "CODE_SIGN_STYLE", "Manual")
+	ensureValue(t, targetBuildConfig.BuildSettings, "DEVELOPMENT_TEAM", team)
+	ensureValue(t, targetBuildConfig.BuildSettings, "CODE_SIGN_IDENTITY", signingIdentity)
+	ensureValue(t, targetBuildConfig.BuildSettings, "CODE_SIGN_IDENTITY[sdk=iphoneos*]", signingIdentity)
+	ensureValue(t, targetBuildConfig.BuildSettings, "PROVISIONING_PROFILE_SPECIFIER", "")
+	ensureValue(t, targetBuildConfig.BuildSettings, "PROVISIONING_PROFILE", provisioningProfile)
+}
+
+func TestXcodeProj_ForceCodeSign_WithouthTargetAttributes(t *testing.T) {
+	// arrange
+	proj, err := parsePBXProjContent([]byte(pbxprojWithouthTargetAttributes))
+	require.NoError(t, err)
+
+	configurationName := "Debug"
+	targetName := "TargetWithouthTargetAttributes"
+
+	team := "ABCD1234"
+	signingIdentity := "Apple Development: John Doe (ASDF1234)"
+	provisioningProfile := "asdf56b6-e75a-4f86-bf25-101bfc2fasdf"
+
+	// act
+	err = proj.ForceCodeSign(configurationName, targetName, team, signingIdentity, provisioningProfile)
+	require.NoError(t, err)
+
+	// assert
+	target := findTarget(t, proj, targetName)
+
+	targetBuildConfig := findBuildConfiguration(t, target, configurationName)
+	ensureValue(t, targetBuildConfig.BuildSettings, "CODE_SIGN_STYLE", "Manual")
+	ensureValue(t, targetBuildConfig.BuildSettings, "DEVELOPMENT_TEAM", team)
+	ensureValue(t, targetBuildConfig.BuildSettings, "CODE_SIGN_IDENTITY", signingIdentity)
+	ensureValue(t, targetBuildConfig.BuildSettings, "PROVISIONING_PROFILE_SPECIFIER", "")
+	ensureValue(t, targetBuildConfig.BuildSettings, "PROVISIONING_PROFILE", provisioningProfile)
+}
+
+func TestXcodeProj_ForceCodeSign_OverridesSigningBuildSettingsOnly(t *testing.T) {
+	// arrange
+	proj, err := parsePBXProjContent([]byte(pbxprojWithouthTargetAttributes))
+	require.NoError(t, err)
+
+	configurationName := "Debug"
+	targetName := "TargetWithouthTargetAttributes"
+
+	team := "ABCD1234"
+	signingIdentity := "Apple Development: John Doe (ASDF1234)"
+	provisioningProfile := "asdf56b6-e75a-4f86-bf25-101bfc2fasdf"
+
+	// act
+	err = proj.ForceCodeSign(configurationName, targetName, team, signingIdentity, provisioningProfile)
+	require.NoError(t, err)
+
+	// assert
+	target := findTarget(t, proj, targetName)
+
+	targetBuildConfig := findBuildConfiguration(t, target, configurationName)
+	ensureValue(t, targetBuildConfig.BuildSettings, "INFOPLIST_FILE", "Target copy-Info.plist")
+}
+
+func ensureValue(t *testing.T, obj serialized.Object, key, value string) {
+	v, err := obj.String(key)
+	require.NoError(t, err)
+	require.Equal(t, value, v)
+}
+
+func findTarget(t *testing.T, project *XcodeProj, name string) Target {
+	var target Target
+	for _, t := range project.Proj.Targets {
+		if t.Name == name {
+			target = t
+			break
+		}
 	}
-	err := xcodeProject.ForceCodeSign("Debug", "target", "team123", "identity123", "profile123")
-	require.NoError(t, err)
-
-	require.Equal(t, "Manual", targetAttributes["ProvisioningStyle"])
-	require.Equal(t, "team123", targetAttributes["DevelopmentTeam"])
-	require.Equal(t, "", targetAttributes["DevelopmentTeamName"])
-
-	require.Equal(t, 5, len(buildSettings))
-	require.Equal(t, "Manual", buildSettings["CODE_SIGN_STYLE"])
-	require.Equal(t, "team123", buildSettings["DEVELOPMENT_TEAM"])
-	require.Equal(t, "identity123", buildSettings["CODE_SIGN_IDENTITY"])
-	require.Equal(t, "", buildSettings["PROVISIONING_PROFILE_SPECIFIER"])
-	require.Equal(t, "profile123", buildSettings["PROVISIONING_PROFILE"])
+	require.NotNil(t, target)
+	return target
 }
 
-func TestForceCodeSignOnBuildConfiguration(t *testing.T) {
-	buildConfiguration := serialized.Object(map[string]interface{}{"buildSettings": map[string]interface{}{}})
-	err := forceCodeSignOnBuildConfiguration(buildConfiguration, "team123", "profile123", "identity123")
+func projectTargetAttributes(t *testing.T, project *XcodeProj, targetID string) serialized.Object {
+	attr, err := project.Proj.Attributes.TargetAttributes.Object(targetID)
 	require.NoError(t, err)
-
-	settings, err := buildConfiguration.Object("buildSettings")
-	require.NoError(t, err)
-
-	require.Equal(t, 5, len(settings))
-	require.Equal(t, "Manual", settings["CODE_SIGN_STYLE"])
-	require.Equal(t, "team123", settings["DEVELOPMENT_TEAM"])
-	require.Equal(t, "identity123", settings["CODE_SIGN_IDENTITY"])
-	require.Equal(t, "", settings["PROVISIONING_PROFILE_SPECIFIER"])
-	require.Equal(t, "profile123", settings["PROVISIONING_PROFILE"])
+	return attr
 }
 
-func TestForceCodeSignOnBuildConfiguration_SpecificSetting(t *testing.T) {
-	buildConfiguration := serialized.Object(map[string]interface{}{"buildSettings": map[string]interface{}{"CODE_SIGN_IDENTITY[sdk=iphoneos*]": "iPhone Developer: Dev Portal Bot Bitrise (E89JV3W9K4)"}})
-	err := forceCodeSignOnBuildConfiguration(buildConfiguration, "team123", "profile123", "identity123")
-	require.NoError(t, err)
-
-	settings, err := buildConfiguration.Object("buildSettings")
-	require.NoError(t, err)
-
-	require.Equal(t, 6, len(settings))
-	require.Equal(t, "identity123", settings["CODE_SIGN_IDENTITY[sdk=iphoneos*]"])
-}
-
-func TestForceCodeSignOnBuildConfiguration_OtherSetting(t *testing.T) {
-	buildConfiguration := serialized.Object(map[string]interface{}{"buildSettings": map[string]interface{}{"DEBUG_INFORMATION_FORMAT": "dwarf"}})
-	err := forceCodeSignOnBuildConfiguration(buildConfiguration, "team123", "profile123", "identity123")
-	require.NoError(t, err)
-
-	settings, err := buildConfiguration.Object("buildSettings")
-	require.NoError(t, err)
-
-	require.Equal(t, 6, len(settings))
-	require.Equal(t, "dwarf", settings["DEBUG_INFORMATION_FORMAT"])
+func findBuildConfiguration(t *testing.T, target Target, name string) BuildConfiguration {
+	var config BuildConfiguration
+	for _, c := range target.BuildConfigurationList.BuildConfigurations {
+		if c.Name == name {
+			config = c
+		}
+	}
+	require.NotNil(t, config)
+	return config
 }
 
 func TestXcodeProjOpen_AposthropeSupported(t *testing.T) {
