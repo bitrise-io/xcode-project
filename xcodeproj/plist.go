@@ -44,7 +44,7 @@ func ReadPlistFile(path string) (serialized.Object, int, error) {
 // - OpenStepFormat = 3
 // - GNUStepFormat  = 4
 func WritePlistFile(path string, entitlements serialized.Object, format int) error {
-	marshalled, err := plist.Marshal(entitlements, format)
+	marshalled, err := plist.MarshalIndent(entitlements, format, "\t")
 	if err != nil {
 		return err
 	}
