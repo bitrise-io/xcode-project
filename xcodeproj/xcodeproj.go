@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/bitrise-io/go-plist"
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
@@ -19,7 +20,6 @@ import (
 	"github.com/bitrise-io/xcode-project/xcodebuild"
 	"github.com/bitrise-io/xcode-project/xcscheme"
 	"golang.org/x/text/unicode/norm"
-	"howett.net/plist"
 )
 
 // XcodeProj ...
@@ -330,7 +330,7 @@ func Open(pth string) (XcodeProj, error) {
 
 func parsePBXProjContent(content []byte) (*XcodeProj, error) {
 	var rawPbxProj serialized.Object
-	format, err := plist.Unmarshal(content, &rawPbxProj)
+	format, err := plist.UnmarshalWithCustomAnnotation(content, &rawPbxProj)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal project.pbxproj: %s", err)
 	}

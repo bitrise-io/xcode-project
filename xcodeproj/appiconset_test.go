@@ -8,8 +8,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/bitrise-io/go-plist"
 	"github.com/bitrise-io/xcode-project/serialized"
-	"howett.net/plist"
 )
 
 func Test_assetCatalog(t *testing.T) {
