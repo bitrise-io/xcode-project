@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/bitrise-io/go-utils/command"
 	"github.com/bitrise-io/xcode-project/serialized"
 	"github.com/bitrise-io/xcode-project/testhelper"
 	"github.com/bitrise-io/xcode-project/xcscheme"
@@ -784,44 +783,6 @@ func TestXcodeProjOpen_AposthropeSupported(t *testing.T) {
 	_, err = Open(filepath.Join(dir, "XcodeProj.xcodeproj"))
 	if err != nil {
 		t.Fatalf("Failed to reopen project after saving it, error: %s", err)
-	}
-}
-
-func TestXcodeProj_savePBXProj_doesNotOverwriteVersionInfo(t *testing.T) {
-	t.Log("Opening Fruta")
-	{
-		dir := testhelper.GitCloneBranchIntoTmpDir(t, "https://github.com/bitrise-io/Fruta.git", "no_app_clip")
-		t.Logf("Temp dir: %s", dir)
-
-		project, err := Open(filepath.Join(dir, "Fruta.xcodeproj"))
-		require.NoError(t, err)
-		require.Equal(t, filepath.Join(dir, "Fruta.xcodeproj"), project.Path)
-		require.Equal(t, "Fruta", project.Name)
-
-		configurationName := "Debug"
-		targetName := "Fruta iOS"
-
-		team := "ABCD1234"
-		signingIdentity := "Apple Development: John Doe (ASDF1234)"
-		provisioningProfile := "asdf56b6-e75a-4f86-bf25-101bfc2fasdf"
-
-		err = project.ForceCodeSign(configurationName, targetName, team, signingIdentity, provisioningProfile)
-		if err != nil {
-			t.Errorf("failed to codesign project: %s", err)
-		}
-
-		if err := project.savePBXProj(); err != nil {
-			t.Errorf("faild to marshal project: %s ", err)
-		}
-
-		versionCmd := command.New("xcrun", "agvtool", "what-version")
-		versionCmd.SetDir(dir)
-
-		out, err := versionCmd.RunAndReturnTrimmedCombinedOutput()
-		if err != nil {
-			t.Errorf("command failed: %v output: %s", err, out)
-		}
-		t.Logf("agvtool out: %s", out)
 	}
 }
 
