@@ -787,7 +787,7 @@ func TestXcodeProjOpen_AposthropeSupported(t *testing.T) {
 	}
 }
 
-func TestXcodeProj_savePBXProj(t *testing.T) {
+func TestXcodeProj_savePBXProj_doesNotOverwriteVersionInfo(t *testing.T) {
 	t.Log("Opening Fruta")
 	{
 		dir := testhelper.GitCloneBranchIntoTmpDir(t, "https://github.com/bitrise-io/Fruta.git", "no_app_clip")
@@ -823,4 +823,26 @@ func TestXcodeProj_savePBXProj(t *testing.T) {
 		}
 		t.Logf("agvtool out: %s", out)
 	}
+}
+
+func TestXcodeProj_perObjectModify(t *testing.T) {
+	proj, err := parsePBXProjContent([]byte(pbxprojWithouthTargetAttributes))
+	require.NoError(t, err)
+
+	configurationName := "Debug"
+	targetName := "TargetWithouthTargetAttributes"
+
+	team := "ABCD1234"
+	signingIdentity := "Apple Development: John Doe (ASDF1234)"
+	provisioningProfile := "asdf56b6-e75a-4f86-bf25-101bfc2fasdf"
+
+	err = proj.ForceCodeSign(configurationName, targetName, team, signingIdentity, provisioningProfile)
+	require.NoError(t, err)
+
+	want := []byte(pbxprojWTAafterPerObjectModify)
+
+	got, err := proj.perObjectModify()
+
+	require.NoError(t, err, "XcodeProj.perObjectModify() error =")
+	require.Equal(t, string(want), string(got), "XcodeProj.perObjectModify() =")
 }

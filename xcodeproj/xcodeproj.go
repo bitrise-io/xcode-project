@@ -662,10 +662,8 @@ func (p XcodeProj) perObjectModify() ([]byte, error) {
 	var contentsMod []byte
 	lastPos := 0
 	for i, mod := range mods {
-		if i < len(mods)-1 {
-			if mod.end >= mods[i+1].start-1 {
-				return nil, fmt.Errorf("overlapping changes")
-			}
+		if i < len(mods)-1 && mod.end >= mods[i+1].start {
+			return nil, fmt.Errorf("overlapping changes: %d, %d", mods[i].end, mods[i+1].start)
 		}
 
 		contentsMod = append(contentsMod, p.originalContents[lastPos:mod.start]...)
