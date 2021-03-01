@@ -785,3 +785,48 @@ func TestXcodeProjOpen_AposthropeSupported(t *testing.T) {
 		t.Fatalf("Failed to reopen project after saving it, error: %s", err)
 	}
 }
+
+func TestXcodeProj_perObjectModify(t *testing.T) {
+	tests := []struct {
+		name                  string
+		projContent           string
+		configuration, target string
+		want                  []byte
+		wantErr               bool
+	}{
+		{
+			name:          "No target attributes",
+			projContent:   pbxprojWithouthTargetAttributes,
+			configuration: "Debug",
+			target:        "TargetWithouthTargetAttributes",
+			want:          []byte(pbxprojWTAafterPerObjectModify),
+		},
+		{
+			name:          "Will change 2 objects (as Target attributes is included in the project)",
+			projContent:   testhelper.XcodeProjectTest,
+			configuration: "Debug",
+			target:        "XcodeProj",
+			want:          []byte(testhelper.XcodeProjectTestChanged),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			proj, err := parsePBXProjContent([]byte(tt.projContent))
+			require.NoError(t, err)
+
+			team := "ABCD1234"
+			signingIdentity := "Apple Development: John Doe (ASDF1234)"
+			provisioningProfile := "asdf56b6-e75a-4f86-bf25-101bfc2fasdf"
+
+			err = proj.ForceCodeSign(tt.configuration, tt.target, team, signingIdentity, provisioningProfile)
+			require.NoError(t, err)
+
+			got, err := proj.perObjectModify()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("XcodeProj.perObjectModify() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			require.Equal(t, string(tt.want), string(got), "XcodeProj.perObjectModify() =")
+		})
+	}
+}
