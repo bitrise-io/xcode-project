@@ -1,7 +1,6 @@
 package xcodeproj
 
 import (
-	"io/ioutil"
 	"path/filepath"
 	"testing"
 
@@ -827,8 +826,6 @@ func TestXcodeProj_perObjectModify(t *testing.T) {
 				t.Errorf("XcodeProj.perObjectModify() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			err = ioutil.WriteFile("/Users/lpusok/p.pbxproj", got, 0644)
-			require.NoError(t, err)
 			require.Equal(t, string(tt.want), string(got), "XcodeProj.perObjectModify() =")
 		})
 	}
