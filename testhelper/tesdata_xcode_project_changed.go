@@ -1,5 +1,6 @@
 package testhelper
 
+// XcodeProjectTest project.pbxproj from https://github.com/bitrise-io/xcode-project-test, with codesign settings applied
 const XcodeProjectTestChanged = `// !$*UTF8*$!
 {
 	archiveVersion = 1;

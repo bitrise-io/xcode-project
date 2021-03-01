@@ -1,5 +1,6 @@
 package testhelper
 
+// XcodeProjectTest project.pbxproj from https://github.com/bitrise-io/xcode-project-test
 const XcodeProjectTest = `// !$*UTF8*$!
 {
 	archiveVersion = 1;
