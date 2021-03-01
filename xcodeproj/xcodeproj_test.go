@@ -1,6 +1,7 @@
 package xcodeproj
 
 import (
+	"io/ioutil"
 	"path/filepath"
 	"testing"
 
@@ -787,23 +788,48 @@ func TestXcodeProjOpen_AposthropeSupported(t *testing.T) {
 }
 
 func TestXcodeProj_perObjectModify(t *testing.T) {
-	proj, err := parsePBXProjContent([]byte(pbxprojWithouthTargetAttributes))
-	require.NoError(t, err)
+	tests := []struct {
+		name                  string
+		projContent           string
+		configuration, target string
+		want                  []byte
+		wantErr               bool
+	}{
+		{
+			name:          "No target attributes",
+			projContent:   pbxprojWithouthTargetAttributes,
+			configuration: "Debug",
+			target:        "TargetWithouthTargetAttributes",
+			want:          []byte(pbxprojWTAafterPerObjectModify),
+		},
+		{
+			name:          "Will change 2 objects (as Target attributes is included in the project)",
+			projContent:   testhelper.XcodeProjectTest,
+			configuration: "Debug",
+			target:        "XcodeProj",
+			want:          []byte(testhelper.XcodeProjectTestChanged),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			proj, err := parsePBXProjContent([]byte(tt.projContent))
+			require.NoError(t, err)
 
-	configurationName := "Debug"
-	targetName := "TargetWithouthTargetAttributes"
+			team := "ABCD1234"
+			signingIdentity := "Apple Development: John Doe (ASDF1234)"
+			provisioningProfile := "asdf56b6-e75a-4f86-bf25-101bfc2fasdf"
 
-	team := "ABCD1234"
-	signingIdentity := "Apple Development: John Doe (ASDF1234)"
-	provisioningProfile := "asdf56b6-e75a-4f86-bf25-101bfc2fasdf"
+			err = proj.ForceCodeSign(tt.configuration, tt.target, team, signingIdentity, provisioningProfile)
+			require.NoError(t, err)
 
-	err = proj.ForceCodeSign(configurationName, targetName, team, signingIdentity, provisioningProfile)
-	require.NoError(t, err)
-
-	want := []byte(pbxprojWTAafterPerObjectModify)
-
-	got, err := proj.perObjectModify()
-
-	require.NoError(t, err, "XcodeProj.perObjectModify() error =")
-	require.Equal(t, string(want), string(got), "XcodeProj.perObjectModify() =")
+			got, err := proj.perObjectModify()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("XcodeProj.perObjectModify() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			err = ioutil.WriteFile("/Users/lpusok/p.pbxproj", got, 0644)
+			require.NoError(t, err)
+			require.Equal(t, string(tt.want), string(got), "XcodeProj.perObjectModify() =")
+		})
+	}
 }

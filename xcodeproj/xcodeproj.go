@@ -595,13 +595,9 @@ func (p XcodeProj) perObjectModify() ([]byte, error) {
 			continue
 		}
 
-		customPosDictInt, ok := objectsAnnotated[customAnnotationKey]
-		if !ok {
-			return nil, fmt.Errorf("no raw object position available")
-		}
-		customPosDict, ok := customPosDictInt.(serialized.Object)
-		if !ok {
-			return nil, fmt.Errorf("raw object position map has unexpected type %T (%v)", customPosDict, customPosDict)
+		customPosDict, err := objectsAnnotated.Object(customAnnotationKey)
+		if err != nil {
+			return nil, fmt.Errorf("no raw object position available: %v", err)
 		}
 		startPos, err := customPosDict.Int64(startKey)
 		if err != nil {
