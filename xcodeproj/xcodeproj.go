@@ -599,27 +599,19 @@ func (p XcodeProj) perObjectModify() ([]byte, error) {
 		if !ok {
 			return nil, fmt.Errorf("no raw object position available")
 		}
-		customPosDict, ok := customPosDictInt.(map[string]interface{})
+		customPosDict, ok := customPosDictInt.(serialized.Object)
 		if !ok {
-			return nil, fmt.Errorf("raw object position map has unexpected format")
+			return nil, fmt.Errorf("raw object position map has unexpected type %T (%v)", customPosDict, customPosDict)
+		}
+		startPos, err := customPosDict.Int64(startKey)
+		if err != nil {
+			return nil, fmt.Errorf("no raw object start position available: %v", err)
+		}
+		endPos, err := customPosDict.Int64(endKey)
+		if err != nil {
+			return nil, fmt.Errorf("no raw end position availbale: %v", err)
 		}
 
-		startPosInt, ok := customPosDict[startKey]
-		if !ok {
-			return nil, fmt.Errorf("no raw object start position available")
-		}
-		startPos, ok := startPosInt.(int64)
-		if !ok {
-			return nil, fmt.Errorf("unexepected value for object start %s", startPosInt)
-		}
-		endPosInt, ok := customPosDict[endKey]
-		if !ok {
-			return nil, fmt.Errorf("no raw end position availbale")
-		}
-		endPos, ok := endPosInt.(int64)
-		if !ok {
-			return nil, fmt.Errorf("unexpected value for object end %s", endPosInt)
-		}
 		contentMod, err := plist.MarshalIndent(objectMod, p.Format, "\t")
 		if err != nil {
 			return nil, fmt.Errorf("could not marshal object (%s): %v", objectsMod, err)
