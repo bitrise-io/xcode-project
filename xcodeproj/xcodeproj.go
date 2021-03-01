@@ -336,7 +336,7 @@ func parsePBXProjContent(content []byte) (*XcodeProj, error) {
 	}
 
 	annotatedPbxProj := deepCopyObject(rawPbxProj) // Preserve annotations
-	removeCustomInfo(rawPbxProj)
+	rawPbxProj = removeCustomInfoObject(rawPbxProj)
 	originalPbxProj := deepCopyObject(rawPbxProj)
 
 	objects, err := rawPbxProj.Object("objects")
@@ -523,13 +523,35 @@ const (
 	endKey              = plist.CustomAnnotationEndKey
 )
 
-func removeCustomInfo(object serialized.Object) {
-	delete(object, customAnnotationKey)
-	for _, value := range object {
-		m, ok := value.(map[string]interface{})
-		if ok {
-			removeCustomInfo(m)
+func removeCustomInfoObject(o serialized.Object) serialized.Object {
+	for _, v := range o {
+		removeCustomInfo(v)
+	}
+
+	return o
+}
+
+func removeCustomInfo(o interface{}) interface{} {
+	switch container := o.(type) {
+	case map[string]interface{}:
+		{
+			delete(container, customAnnotationKey)
+			for _, val := range container {
+				removeCustomInfo(val)
+			}
+
+			return container
 		}
+	case []interface{}:
+		{
+			for _, element := range container {
+				removeCustomInfo(element)
+			}
+
+			return container
+		}
+	default:
+		return o
 	}
 }
 
@@ -543,15 +565,28 @@ func deepCopyObject(object serialized.Object) serialized.Object {
 }
 
 func deepCopy(o interface{}) interface{} {
-	m, ok := o.(map[string]interface{})
-	if ok {
-		newObj := make(map[string]interface{})
-		for k, v := range m {
-			newObj[k] = deepCopy(v)
+	switch container := o.(type) {
+	case map[string]interface{}:
+		{
+			newObj := make(map[string]interface{})
+			for k, v := range container {
+				newObj[k] = deepCopy(v)
+			}
+
+			return newObj
 		}
-		return newObj
+	case []interface{}:
+		{
+			destArray := make([]interface{}, len(container))
+			for i, element := range container {
+				destArray[i] = deepCopy(element)
+			}
+
+			return destArray
+		}
+	default:
+		return o
 	}
-	return o
 }
 
 type change struct {
