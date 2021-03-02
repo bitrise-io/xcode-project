@@ -830,3 +830,97 @@ func TestXcodeProj_perObjectModify(t *testing.T) {
 		})
 	}
 }
+
+func Test_removeCustomInfo(t *testing.T) {
+	tests := []struct {
+		o    interface{}
+		name string
+		want interface{}
+	}{
+		{
+			name: "map",
+			o: map[string]interface{}{
+				"a":                 "b",
+				customAnnotationKey: "dsad",
+			},
+			want: map[string]interface{}{
+				"a": "b",
+			},
+		},
+		{
+			name: "map -> map",
+			o: map[string]interface{}{
+				"a": map[string]interface{}{
+					"a":                 "b",
+					customAnnotationKey: "dsad",
+				},
+			},
+			want: map[string]interface{}{
+				"a": map[string]interface{}{
+					"a": "b",
+				},
+			},
+		},
+		{
+			name: "array -> map",
+			o: []interface{}{
+				map[string]interface{}{
+					"a":                 "b",
+					customAnnotationKey: "dsad",
+				},
+			},
+			want: []interface{}{
+				map[string]interface{}{
+					"a": "b",
+				},
+			},
+		},
+		{
+			name: "map -> array -> map",
+			o: map[string]interface{}{
+				"a": []interface{}{
+					map[string]interface{}{
+						"a": map[string]interface{}{
+							"a":                 "b",
+							customAnnotationKey: "dsad",
+						},
+					},
+				},
+			},
+			want: map[string]interface{}{
+				"a": []interface{}{
+					map[string]interface{}{
+						"a": map[string]interface{}{
+							"a": "b",
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := removeCustomInfo(tt.o)
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_deepCopyObject(t *testing.T) {
+	object := map[string]interface{}{
+		"d": []interface{}{
+			map[string]interface{}{"a": "b"},
+		},
+	}
+
+	got := deepCopyObject(object)
+	require.EqualValues(t, object, got, "deepCopyObject() returns identical value as input")
+
+	internalArray, ok := object["d"].([]interface{})
+	require.True(t, ok)
+	internalMap, ok := internalArray[0].(map[string]interface{})
+	require.True(t, ok)
+	internalMap["a"] = "c"
+
+	require.NotEqual(t, object, got, "deepCopyObject() changing copied object does not change original")
+}
